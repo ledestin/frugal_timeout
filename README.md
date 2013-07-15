@@ -9,18 +9,19 @@ Ruby Timeout.timeout replacement using only 2 threads
 ```
 require 'frugal_timeout'
 
-# Ensure that calling timeout() will use FrugalTimeout.timeout()
-FrugalTimeout.dropin!
-
 begin
-  timeout(0.1) { sleep }
+  FrugalTimeout.timeout(0.1) { sleep }
 rescue Timeout::Error
-  puts 'yay!'
+  puts 'it works!'
 end
 
+# Ensure that calling timeout() will use FrugalTimeout.timeout().
+FrugalTimeout.dropin!
+
+# Rescue frugal-specific exception if needed.
 begin
   timeout(0.1) { sleep }
 rescue FrugalTimeout::Error
-  puts 'yay again!'
+  puts 'yay!'
 end
 ```
