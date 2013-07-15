@@ -8,8 +8,7 @@ Gem::Specification.new do |s|
   s.email       = 'ledestin@gmail.com'
   s.files       = ['lib/frugal_timeout.rb']
   s.require_paths = ['lib']
-  s.homepage    =
-    'http://rubygems.org/gems/frugal_timeout'
+  s.homepage    = 'https://github.com/ledestin/frugal_timeout'
 
   s.add_development_dependency 'rspec', '>= 2.13'
 end
