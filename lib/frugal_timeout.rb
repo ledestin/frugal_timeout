@@ -94,9 +94,8 @@ module FrugalTimeout
       }
       start = Time.now
       sleepFor ? sleep(sleepFor) : sleep
-      slept = Time.now - start
       @sleeperMutex.synchronize {
-	@in.push :expired if sleepFor && slept >= sleepFor
+	@in.push :expired if sleepFor && Time.now - start >= sleepFor
       }
     }
   }
