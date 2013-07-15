@@ -4,6 +4,12 @@ frugal_timeout
 [![Build Status](https://travis-ci.org/ledestin/frugal_timeout.png)](https://travis-ci.org/ledestin/frugal_timeout)
 Ruby Timeout.timeout replacement using only 2 threads
 
+## Why
+
+As you may know, the stock Timeout.timeout uses thread per timeout call. If you
+use it a lot, you will soon be out of threads. This gem is to provide an
+alternative that uses only 2 threads.
+
 ## Example
 
 ```
