@@ -94,7 +94,7 @@ describe FrugalTimeout do
     res, resMutex = [], Mutex.new
     (cnt = 5).times { new_timeout_request_thread 1, res, resMutex }
     sleep 1 until res.size == cnt
-    res.each { |sec| (sec - 1).should < 0.001 }
+    res.each { |sec| (sec - 1).should < 0.01 }
   end
 
   it 'finishes after N sec' do
