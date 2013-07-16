@@ -110,6 +110,10 @@ describe FrugalTimeout do
     timeout(20) { |t| t }.should == 20
   end
 
+  it 'raises specified exception' do
+    expect { timeout(0.1, IOError) { sleep } }.to raise_error IOError
+  end
+
   it "doesn't raise exception if there's no need" do
     timeout(1) { }
     sleep 2

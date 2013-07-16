@@ -14,8 +14,8 @@ module FrugalTimeout
 
     attr_reader :at, :thread
 
-    def initialize thread, at
-      @thread, @at = thread, at
+    def initialize thread, at, klass
+      @thread, @at, @klass = thread, at, klass
     end
 
     def <=>(other)
@@ -31,7 +31,7 @@ module FrugalTimeout
     end
 
     def enforceTimeout
-      @thread.raise Error, 'execution expired' unless done?
+      @thread.raise @klass || Error, 'execution expired' unless done?
     end
   end
 
@@ -118,7 +118,7 @@ module FrugalTimeout
   end
 
   def self.timeout t, klass=nil
-    @in.push request = Request.new(Thread.current, Time.now + t)
+    @in.push request = Request.new(Thread.current, Time.now + t, klass)
     begin
       yield t
     ensure
