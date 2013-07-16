@@ -90,6 +90,13 @@ describe FrugalTimeout do
     res.each { |sec| sec.round.should == 1 }
   end
 
+  it 'handles multiple concurrent same timeouts' do
+    res, resMutex = [], Mutex.new
+    (cnt = 5).times { new_timeout_request_thread 1, res, resMutex }
+    sleep 1 until res.size == cnt
+    res.each { |sec| (sec - 1).should < 0.001 }
+  end
+
   it 'finishes after N sec' do
     start = Time.now
     expect { timeout(1) { sleep 2 } }.to raise_error FrugalTimeout::Error
