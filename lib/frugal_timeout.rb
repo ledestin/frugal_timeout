@@ -3,11 +3,36 @@
 require 'thread'
 require 'timeout'
 
+#--
+# {{{1 Rdoc
+#++
+# Timeout.timeout() replacement using only 2 threads
+# = Example
+#
+#   require 'frugal_timeout'
+#
+#   begin
+#     FrugalTimeout.timeout(0.1) { sleep }
+#   rescue Timeout::Error
+#     puts 'it works!'
+#   end
+#
+#   # Ensure that calling timeout() will use FrugalTimeout.timeout().
+#   FrugalTimeout.dropin!
+#
+#   # Rescue frugal-specific exception if needed.
+#   begin
+#     timeout(0.1) { sleep }
+#   rescue FrugalTimeout::Error
+#     puts 'yay!'
+#   end
+#--
+# }}}1
 module FrugalTimeout
-  # {{{1 Error
+  # {{{2 Error
   class Error < Timeout::Error; end
 
-  # {{{1 Request
+  # {{{2 Request
   class Request
     include Comparable
     @@mutex = Mutex.new
@@ -35,10 +60,10 @@ module FrugalTimeout
     end
   end
 
-  # {{{1 Main code
+  # {{{2 Main code
   @in = Queue.new
 
-  # {{{2 Timeout request and expiration processing thread
+  # {{{3 Timeout request and expiration processing thread
   Thread.new {
     nearestTimeout, requests = nil, []
     loop {
@@ -84,7 +109,7 @@ module FrugalTimeout
     }
   }
 
-  # {{{2 Closest expiration notifier thread
+  # {{{3 Closest expiration notifier thread
   @sleeperDelays, @sleeperMutex = Queue.new, Mutex.new
   @sleeper = Thread.new {
     loop {
@@ -100,8 +125,9 @@ module FrugalTimeout
     }
   }
 
-  # {{{2 Methods
-  # Replace Object.timeout().
+  # {{{3 Methods
+
+  # Ensure that calling timeout() will use FrugalTimeout.timeout()
   def self.dropin!
     Object.class_eval \
       'def timeout t, klass=nil, &b
@@ -109,14 +135,16 @@ module FrugalTimeout
        end'
   end
 
-  def self.setupSleeper sleepFor
+  def self.setupSleeper sleepFor # :nodoc:
     @sleeperMutex.synchronize {
       sleep 0.1 until @sleeper.status == 'sleep'
       @sleeperDelays.push sleepFor
       @sleeper.wakeup
     }
   end
+  private :setupSleeper
 
+  # Same as Timeout.timeout()
   def self.timeout t, klass=nil
     @in.push request = Request.new(Thread.current, Time.now + t, klass)
     begin
@@ -125,5 +153,5 @@ module FrugalTimeout
       request.done! unless $!.is_a? FrugalTimeout::Error
     end
   end
-  #}}}1
+  # }}}2
 end
