@@ -2,6 +2,7 @@ frugal_timeout
 ==============
 
 [![Build Status](https://travis-ci.org/ledestin/frugal_timeout.png)](https://travis-ci.org/ledestin/frugal_timeout)
+[![Code Climate](https://codeclimate.com/github/ledestin/frugal_timeout.png)](https://codeclimate.com/github/ledestin/frugal_timeout)
 Ruby Timeout.timeout replacement using only 2 threads
 
 ## Why
