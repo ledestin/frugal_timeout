@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'rspec'
+require 'spec_helper'
 require 'frugal_timeout'
 
 FrugalTimeout.dropin!
