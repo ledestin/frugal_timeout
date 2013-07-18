@@ -142,7 +142,7 @@ module FrugalTimeout
       @sleeper.wakeup
     }
   end
-  private :setupSleeper
+  private_class_method :setupSleeper
 
   # Same as Timeout.timeout()
   def self.timeout t, klass=nil
