@@ -29,10 +29,10 @@ require 'timeout'
 #--
 # }}}1
 module FrugalTimeout
-  # {{{2 Error
+  # {{{1 Error
   class Error < Timeout::Error; end
 
-  # {{{2 Request
+  # {{{1 Request
   class Request
     include Comparable
     @@mutex = Mutex.new
@@ -60,10 +60,10 @@ module FrugalTimeout
     end
   end
 
-  # {{{2 Main code
+  # {{{1 Main code
   @in = Queue.new
 
-  # {{{3 Timeout request and expiration processing thread
+  # {{{2 Timeout request and expiration processing thread
   Thread.new {
     nearestTimeout, requests = nil, []
     loop {
@@ -109,7 +109,7 @@ module FrugalTimeout
     }
   }
 
-  # {{{3 Closest expiration notifier thread
+  # {{{2 Closest expiration notifier thread
   @sleeperDelays, @sleeperMutex = Queue.new, Mutex.new
   @sleeper = Thread.new {
     loop {
@@ -125,7 +125,7 @@ module FrugalTimeout
     }
   }
 
-  # {{{3 Methods
+  # {{{2 Methods
 
   # Ensure that calling timeout() will use FrugalTimeout.timeout()
   def self.dropin!
@@ -153,5 +153,5 @@ module FrugalTimeout
       request.done! unless $!.is_a? FrugalTimeout::Error
     end
   end
-  # }}}2
+  # }}}1
 end
