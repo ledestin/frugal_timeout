@@ -60,8 +60,41 @@ module FrugalTimeout
     end
   end
 
+  # {{{1 SleeperNotifier
+  class SleeperNotifier # :nodoc:
+    def initialize notifyQueue
+      @notifyQueue = notifyQueue
+      @delays, @mutex = Queue.new, Mutex.new
+
+      @thread = Thread.new {
+	loop {
+	  sleepFor = nil
+	  @mutex.synchronize {
+	    sleepFor = @delays.shift until @delays.empty?
+	  }
+	  start = Time.now
+	  sleepFor ? sleep(sleepFor) : sleep
+	  @mutex.synchronize {
+	    @notifyQueue.push :expired \
+	      if sleepFor && Time.now - start >= sleepFor
+	  }
+	}
+      }
+      ObjectSpace.define_finalizer self, proc { @thread.kill }
+    end
+
+    def notifyAfter sec
+      @mutex.synchronize {
+	sleep 0.01 until @thread.status == 'sleep'
+	@delays.push sec
+	@thread.wakeup
+      }
+    end
+  end
+
   # {{{1 Main code
   @in = Queue.new
+  @sleeper = SleeperNotifier.new @in
 
   # {{{2 Timeout request and expiration processing thread
   Thread.new {
@@ -85,7 +118,7 @@ module FrugalTimeout
 	nearestTimeout = unless requests.first
 	  nil
 	else
-	  setupSleeper requests.first.at - now
+	  @sleeper.notifyAfter requests.first.at - now
 	  requests.first.at
 	end
 
@@ -104,26 +137,11 @@ module FrugalTimeout
       requests << request
       next if nearestTimeout && request.at > nearestTimeout
 
-      setupSleeper request.at - now
+      @sleeper.notifyAfter request.at - now
       nearestTimeout = request.at
     }
   }
 
-  # {{{2 Closest expiration notifier thread
-  @sleeperDelays, @sleeperMutex = Queue.new, Mutex.new
-  @sleeper = Thread.new {
-    loop {
-      sleepFor = nil
-      @sleeperMutex.synchronize {
-	sleepFor = @sleeperDelays.shift until @sleeperDelays.empty?
-      }
-      start = Time.now
-      sleepFor ? sleep(sleepFor) : sleep
-      @sleeperMutex.synchronize {
-	@in.push :expired if sleepFor && Time.now - start >= sleepFor
-      }
-    }
-  }
 
   # {{{2 Methods
 
@@ -134,15 +152,6 @@ module FrugalTimeout
 	 FrugalTimeout.timeout t, klass, &b
        end'
   end
-
-  def self.setupSleeper sleepFor # :nodoc:
-    @sleeperMutex.synchronize {
-      sleep 0.1 until @sleeper.status == 'sleep'
-      @sleeperDelays.push sleepFor
-      @sleeper.wakeup
-    }
-  end
-  private_class_method :setupSleeper
 
   # Same as Timeout.timeout()
   def self.timeout t, klass=nil

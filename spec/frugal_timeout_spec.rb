@@ -143,3 +143,24 @@ describe FrugalTimeout do
     expect { timeout(-1) { sleep } }.to raise_error Timeout::Error
   end
 end
+
+describe FrugalTimeout::SleeperNotifier do
+  queue = Queue.new
+  sleeper = FrugalTimeout::SleeperNotifier.new queue
+
+  it 'sends notification after delay passed' do
+    start = Time.now
+    sleeper.notifyAfter 0.5
+    queue.shift
+    (Time.now - start - 0.5).round(2).should <= 0.01
+  end
+
+  it 'sends notification one time only for multiple requests' do
+    5.times { sleeper.notifyAfter 0.5 }
+    sleeper.notifyAfter 0.4
+    start = Time.now
+    queue.shift
+    (Time.now - start).round(1).should == 0.4
+    queue.size.should == 0
+  end
+end
