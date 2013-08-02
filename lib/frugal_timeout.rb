@@ -155,7 +155,7 @@ module FrugalTimeout
 
   # Same as Timeout.timeout()
   def self.timeout t, klass=nil
-    @in.push request = Request.new(Thread.current, Time.now + t, klass)
+    @in.push request = Request.new(Thread.current, Time.now + (t || 0), klass)
     begin
       yield t
     ensure
