@@ -30,10 +30,10 @@ require 'timeout'
 # }}}1
 module FrugalTimeout
   # {{{1 Error
-  class Error < Timeout::Error; end
+  class Error < Timeout::Error; end # :nodoc:
 
   # {{{1 Request
-  class Request
+  class Request # :nodoc:
     include Comparable
     @@mutex = Mutex.new
 
