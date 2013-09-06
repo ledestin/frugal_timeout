@@ -7,6 +7,8 @@ require 'frugal_timeout'
 FrugalTimeout.dropin!
 Thread.abort_on_exception = true
 
+SMALLEST_TIMEOUT = 0.0000001
+
 def multiple_timeouts growing, cnt
   res, resMutex = [], Mutex.new
   if growing
@@ -136,11 +138,13 @@ describe FrugalTimeout do
   end
 
   it 'handles already expired timeout well' do
-    expect { timeout(-1) { sleep } }.to raise_error FrugalTimeout::Error
+    expect { timeout(SMALLEST_TIMEOUT) { sleep } }.to \
+      raise_error FrugalTimeout::Error
   end
 
   it 'acts as stock timeout (can rescue the same exception)' do
-    expect { timeout(-1) { sleep } }.to raise_error Timeout::Error
+    expect { timeout(SMALLEST_TIMEOUT) { sleep } }.to \
+      raise_error Timeout::Error
   end
 end
 
