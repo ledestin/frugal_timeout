@@ -154,10 +154,10 @@ module FrugalTimeout
   end
 
   # Same as Timeout.timeout()
-  def self.timeout t, klass=nil
-    @in.push request = Request.new(Thread.current, Time.now + (t || 0), klass)
+  def self.timeout sec, klass=nil
+    @in.push request = Request.new(Thread.current, Time.now + (sec || 0), klass)
     begin
-      yield t
+      yield sec
     ensure
       request.done! unless $!.is_a? FrugalTimeout::Error
     end
