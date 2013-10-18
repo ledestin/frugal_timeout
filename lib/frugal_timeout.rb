@@ -68,13 +68,9 @@ module FrugalTimeout
 
       @thread = Thread.new {
 	loop {
-	  sleepFor = nil
-	  @mutex.synchronize {
-	    sleepFor = @delays.shift until @delays.empty?
-	  }
-	  start = Time.now
+	  sleepFor, start = synchronize { latestDelay }, Time.now
 	  sleepFor ? sleep(sleepFor) : sleep
-	  @mutex.synchronize {
+	  synchronize {
 	    @notifyQueue.push :expired \
 	      if sleepFor && Time.now - start >= sleepFor
 	  }
@@ -83,13 +79,24 @@ module FrugalTimeout
       ObjectSpace.define_finalizer self, proc { @thread.kill }
     end
 
+    def latestDelay
+      delay = @delays.shift until @delays.empty?
+      delay
+    end
+    private :latestDelay
+
     def notifyAfter sec
-      @mutex.synchronize {
+      synchronize {
 	sleep 0.01 until @thread.status == 'sleep'
 	@delays.push sec
 	@thread.wakeup
       }
     end
+
+    def synchronize &b
+      @mutex.synchronize &b
+    end
+    private :synchronize
   end
 
   # {{{1 Main code
