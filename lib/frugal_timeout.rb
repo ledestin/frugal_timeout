@@ -64,7 +64,7 @@ module FrugalTimeout
   class SleeperNotifier # :nodoc:
     def initialize notifyQueue
       @notifyQueue = notifyQueue
-      @delays, @mutex = Queue.new, Mutex.new
+      @delays, @mutex = [], Mutex.new
 
       @thread = Thread.new {
 	loop {
@@ -80,7 +80,8 @@ module FrugalTimeout
     end
 
     def latestDelay
-      delay = @delays.shift until @delays.empty?
+      delay = @delays.last
+      @delays.clear
       delay
     end
     private :latestDelay
