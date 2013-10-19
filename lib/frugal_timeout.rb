@@ -64,11 +64,11 @@ module FrugalTimeout
   class SleeperNotifier # :nodoc:
     def initialize notifyQueue
       @notifyQueue = notifyQueue
-      @delays, @mutex = [], Mutex.new
+      @delay, @mutex = nil, Mutex.new
 
       @thread = Thread.new {
 	loop {
-	  sleepFor, start = synchronize { latestDelay }, Time.now
+	  sleepFor, start = latestDelay, Time.now
 	  sleepFor ? sleep(sleepFor) : sleep
 	  synchronize {
 	    @notifyQueue.push :expired \
@@ -80,16 +80,17 @@ module FrugalTimeout
     end
 
     def latestDelay
-      delay = @delays.last
-      @delays.clear
-      delay
+      synchronize {
+	tmp = @delay
+	@delay = nil
+	tmp
+      }
     end
-    private :latestDelay
 
     def notifyAfter sec
       synchronize {
 	sleep 0.01 until @thread.status == 'sleep'
-	@delays.push sec
+	@delay = sec
 	@thread.wakeup
       }
     end
