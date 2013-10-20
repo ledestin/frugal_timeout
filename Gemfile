@@ -4,4 +4,4 @@ gemspec
 
 gem 'rake'
 gem 'coveralls', :require => false
-gem 'hitimes'
+gem 'hitimes', '~> 1.2'
