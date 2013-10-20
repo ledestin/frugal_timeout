@@ -1,5 +1,6 @@
 # Copyright (C) 2013 by Dmitry Maksyoma <ledestin@gmail.com>
 
+require 'hitimes'
 require 'thread'
 require 'timeout'
 
@@ -32,6 +33,20 @@ module FrugalTimeout
   # {{{1 Error
   class Error < Timeout::Error; end # :nodoc:
 
+  # {{{1 MonotonicTime
+  class MonotonicTime
+    NANOS_IN_SECOND = 1_000_000_000
+
+    def self.measure
+      start = now
+      yield
+      now - start
+    end
+
+    def self.now
+      Hitimes::Interval.now.start_instant.to_f/NANOS_IN_SECOND
+    end
+  end
   # {{{1 Request
   class Request # :nodoc:
     include Comparable

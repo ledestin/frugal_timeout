@@ -168,3 +168,16 @@ describe FrugalTimeout::SleeperNotifier do
     queue.size.should == 0
   end
 end
+
+describe FrugalTimeout::MonotonicTime do
+  it 'ticks properly' do
+    start = FrugalTimeout::MonotonicTime.now
+    sleep 0.1
+    (FrugalTimeout::MonotonicTime.now - start).round(1).should == 0.1
+  end
+
+  it '#measure works' do
+    sleptFor = FrugalTimeout::MonotonicTime.measure { sleep 0.5 }
+    sleptFor.round(1).should == 0.5
+  end
+end
