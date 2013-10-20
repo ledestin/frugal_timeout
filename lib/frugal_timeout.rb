@@ -34,7 +34,7 @@ module FrugalTimeout
   class Error < Timeout::Error; end # :nodoc:
 
   # {{{1 MonotonicTime
-  class MonotonicTime
+  class MonotonicTime # :nodoc:
     NANOS_IN_SECOND = 1_000_000_000
 
     def self.measure
