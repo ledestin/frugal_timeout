@@ -83,11 +83,13 @@ module FrugalTimeout
 
       @thread = Thread.new {
 	loop {
-	  sleepFor, start = latestDelay, Time.now
-	  sleepFor ? sleep(sleepFor) : sleep
+	  unless sleepFor = latestDelay
+	    sleep
+	  else
+	    sleptFor = MonotonicTime.measure { sleep(sleepFor) }
+	  end
 	  synchronize {
-	    @notifyQueue.push :expired \
-	      if sleepFor && Time.now - start >= sleepFor
+	    @notifyQueue.push :expired if sleepFor && sleptFor >= sleepFor
 	  }
 	}
       }
@@ -126,7 +128,7 @@ module FrugalTimeout
     nearestTimeout, requests = nil, []
     loop {
       request = @in.shift
-      now = Time.now
+      now = MonotonicTime.now
 
       if request == :expired
 	# Enforce all expired timeouts.
@@ -182,7 +184,8 @@ module FrugalTimeout
   def self.timeout sec, klass=nil
     return yield sec if sec == nil || sec <= 0
 
-    @in.push request = Request.new(Thread.current, Time.now + sec, klass)
+    @in.push request = Request.new(Thread.current, MonotonicTime.now + sec,
+      klass)
     begin
       yield sec
     ensure
