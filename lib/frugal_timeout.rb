@@ -1,6 +1,7 @@
 # Copyright (C) 2013 by Dmitry Maksyoma <ledestin@gmail.com>
 
 require 'hitimes'
+require 'monitor'
 require 'thread'
 require 'timeout'
 
@@ -77,9 +78,12 @@ module FrugalTimeout
 
   # {{{1 SleeperNotifier
   class SleeperNotifier # :nodoc:
+    include MonitorMixin
+
     def initialize notifyQueue
+      super()
       @notifyQueue = notifyQueue
-      @latestDelay, @mutex = nil, Mutex.new
+      @latestDelay = nil
 
       @thread = Thread.new {
 	loop {
@@ -111,10 +115,6 @@ module FrugalTimeout
 	@latestDelay = sec
 	@thread.wakeup
       }
-    end
-
-    def synchronize &b
-      @mutex.synchronize &b
     end
     private :synchronize
   end
