@@ -72,7 +72,9 @@ module FrugalTimeout
     end
 
     def enforceTimeout
-      @thread.raise @klass || Error, 'execution expired' unless done?
+      @@mutex.synchronize {
+	@thread.raise @klass || Error, 'execution expired' unless @done
+      }
     end
   end
 
