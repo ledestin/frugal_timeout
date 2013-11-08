@@ -148,6 +148,7 @@ module FrugalTimeout
     def notifyAfter sec
       synchronize {
 	sleep 0.01 until @thread.status == 'sleep'
+	sec = 0 if sec < 0
 	@latestDelay = sec
 	@thread.wakeup
       }

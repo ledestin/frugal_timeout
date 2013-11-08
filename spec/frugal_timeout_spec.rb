@@ -187,6 +187,13 @@ describe FrugalTimeout::SleeperNotifier do
     (Time.now - start - 0.5).round(2).should <= 0.01
   end
 
+  it 'handles negative delay' do
+    FrugalTimeout::MonotonicTime.measure {
+      sleeper.notifyAfter -1
+      queue.shift
+    }.round(1).should == 0
+  end
+
   it 'sends notification one time only for multiple requests' do
     5.times { sleeper.notifyAfter 0.5 }
     sleeper.notifyAfter 0.4
