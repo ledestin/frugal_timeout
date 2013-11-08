@@ -79,6 +79,39 @@ module FrugalTimeout
     end
   end
 
+  # {{{1 RequestHandler
+  class RequestHandler
+    def initialize requests, sleeper
+      @requests, @sleeper = requests, sleeper
+    end
+
+    def addRequest sec, klass
+      @requests.synchronize {
+	@requests << (request = Request.new(Thread.current,
+	  MonotonicTime.now + sec, klass))
+	@sleeper.notifyAfter sec if @requests.first == request
+	request
+      }
+    end
+
+    def purgeExpired
+      now = MonotonicTime.now
+
+      # Enforce all expired timeouts.
+      @requests.reject! { |r|
+	break if r.at > now
+
+	r.enforceTimeout
+	true
+      }
+
+      # Activate the nearest non-expired timeout.
+      @requests.synchronize {
+	@sleeper.notifyAfter @requests.first.at - now if @requests.first
+      }
+    end
+  end
+
   # {{{1 SleeperNotifier
   class SleeperNotifier # :nodoc:
     include MonitorMixin
@@ -179,27 +212,14 @@ module FrugalTimeout
 
   # {{{1 Main code
   @in = ::Queue.new
-  @sleeper = SleeperNotifier.new @in
-  @requests = SortedQueue.new
+  @requestHandler = RequestHandler.new(SortedQueue.new,
+    SleeperNotifier.new(@in))
 
   # {{{2 Timeout request expiration processing thread
   Thread.new {
     loop {
       @in.shift
-      now = MonotonicTime.now
-
-      # Enforce all expired timeouts.
-      @requests.reject! { |r|
-	break if r.at > now
-
-	r.enforceTimeout
-	true
-      }
-
-      # Activate the nearest non-expired timeout.
-      @requests.synchronize {
-	@sleeper.notifyAfter @requests.first.at - now if @requests.first
-      }
+      @requestHandler.purgeExpired
     }
   }
 
@@ -217,12 +237,7 @@ module FrugalTimeout
   def self.timeout sec, klass=Error
     return yield sec if sec.nil? || sec <= 0
 
-    request = nil
-    @requests.synchronize {
-      @requests << (request = Request.new(Thread.current,
-	MonotonicTime.now + sec, klass))
-      @sleeper.notifyAfter sec if @requests.first == request
-    }
+    request = @requestHandler.addRequest(sec, klass)
     begin
       yield sec
     ensure
