@@ -219,8 +219,8 @@ module FrugalTimeout
 
     request = nil
     @requests.synchronize {
-      now = MonotonicTime.now
-      @requests << (request = Request.new(Thread.current, now + sec, klass))
+      @requests << (request = Request.new(Thread.current,
+	MonotonicTime.now + sec, klass))
       @sleeper.notifyAfter sec if @requests.first == request
     }
     begin
