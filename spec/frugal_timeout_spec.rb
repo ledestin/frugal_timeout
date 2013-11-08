@@ -181,3 +181,52 @@ describe FrugalTimeout::MonotonicTime do
     sleptFor.round(1).should == 0.5
   end
 end
+
+describe FrugalTimeout::SortedQueue do
+  before :each do
+    @queue = FrugalTimeout::SortedQueue.new
+  end
+
+  it 'allows to push items into queue' do
+    item = 'a'
+    @queue.push item
+    @queue.first.should == item
+  end
+
+  it 'supports << method' do
+    @queue << 'a'
+    @queue.first.should == 'a'
+  end
+
+  it 'makes first in order item appear first' do
+    @queue.push 'b', 'a'
+    @queue.first.should == 'a'
+    @queue.last.should == 'b'
+  end
+
+  it 'allows removing items from queue' do
+    @queue.push 'a', 'b', 'c'
+    @queue.reject! { |item|
+      next true if item < 'c'
+      break
+    }
+    @queue.size.should == 1
+    @queue.first.should == 'c'
+  end
+
+  it "doesn't sort underlying array if pushed values are first in order" do
+    ar = double
+    class MockArray < Array
+      def sort!
+	raise 'not supposed to call sort!'
+      end
+    end
+    @queue = FrugalTimeout::SortedQueue.new MockArray.new
+    expect {
+      @queue.push 'c'
+      @queue.push 'b'
+      @queue.push 'a'
+      @queue.first == 'a'
+    }.not_to raise_error
+  end
+end

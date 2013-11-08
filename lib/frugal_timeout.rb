@@ -48,6 +48,51 @@ module FrugalTimeout
       Hitimes::Interval.now.start_instant.to_f/NANOS_IN_SECOND
     end
   end
+  # {{{1 SortedQueue
+  class SortedQueue
+    extend Forwardable
+    def_delegators :@array, :size
+
+    def initialize storage=[]
+      @array, @unsorted = storage, false
+    end
+
+    def first
+      @array.first
+    end
+
+    def last
+      sort!
+      @array.last
+    end
+
+    def push *args
+      args.each { |arg|
+	case @array.first <=> arg
+	when -1, 0, nil
+	  @array.push arg
+	when 1
+	  @array.unshift arg
+	end
+      }
+      @unsorted = true
+    end
+    alias :<< :push
+
+    def reject! &b
+      sort!
+      @array.reject! &b
+    end
+
+    private
+    def sort!
+      return unless @unsorted
+
+      @array.sort!
+      @unsorted = false
+    end
+  end
+
   # {{{1 Request
   class Request # :nodoc:
     include Comparable
@@ -122,7 +167,7 @@ module FrugalTimeout
   end
 
   # {{{1 Main code
-  @in = Queue.new
+  @in = ::Queue.new
   @sleeper = SleeperNotifier.new @in
 
   # {{{2 Timeout request and expiration processing thread
