@@ -119,7 +119,7 @@ module FrugalTimeout
 
     def enforceTimeout
       @@mutex.synchronize {
-	@thread.raise @klass || Error, 'execution expired' unless @done
+	@thread.raise @klass, 'execution expired' unless @done
       }
     end
   end
@@ -212,13 +212,13 @@ module FrugalTimeout
   # Ensure that calling timeout() will use FrugalTimeout.timeout()
   def self.dropin!
     Object.class_eval \
-      'def timeout t, klass=nil, &b
+      'def timeout t, klass=Error, &b
 	 FrugalTimeout.timeout t, klass, &b
        end'
   end
 
   # Same as Timeout.timeout()
-  def self.timeout sec, klass=nil
+  def self.timeout sec, klass=Error
     return yield sec if sec == nil || sec <= 0
 
     @in.push request = Request.new(Thread.current, MonotonicTime.now + sec,
