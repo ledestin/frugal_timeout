@@ -48,61 +48,6 @@ module FrugalTimeout
       Hitimes::Interval.now.start_instant.to_f/NANOS_IN_SECOND
     end
   end
-  # {{{1 SortedQueue
-  class SortedQueue
-    include MonitorMixin
-
-    def initialize storage=[]
-      super()
-      @array, @unsorted = storage, false
-    end
-
-    def first
-      synchronize { @array.first }
-    end
-
-    def last
-      synchronize {
-	sort!
-	@array.last
-      }
-    end
-
-    def push *args
-      synchronize {
-	args.each { |arg|
-	  case @array.first <=> arg
-	  when -1, 0, nil
-	    @array.push arg
-	  when 1
-	    @array.unshift arg
-	  end
-	}
-	@unsorted = true
-      }
-    end
-    alias :<< :push
-
-    def reject! &b
-      synchronize {
-	sort!
-	@array.reject! &b
-      }
-    end
-
-    def size
-      synchronize { @array.size }
-    end
-
-    private
-    def sort!
-      return unless @unsorted
-
-      @array.sort!
-      @unsorted = false
-    end
-  end
-
   # {{{1 Request
   class Request # :nodoc:
     include Comparable
@@ -175,6 +120,61 @@ module FrugalTimeout
       }
     end
     private :synchronize
+  end
+
+  # {{{1 SortedQueue
+  class SortedQueue
+    include MonitorMixin
+
+    def initialize storage=[]
+      super()
+      @array, @unsorted = storage, false
+    end
+
+    def first
+      synchronize { @array.first }
+    end
+
+    def last
+      synchronize {
+	sort!
+	@array.last
+      }
+    end
+
+    def push *args
+      synchronize {
+	args.each { |arg|
+	  case @array.first <=> arg
+	  when -1, 0, nil
+	    @array.push arg
+	  when 1
+	    @array.unshift arg
+	  end
+	}
+	@unsorted = true
+      }
+    end
+    alias :<< :push
+
+    def reject! &b
+      synchronize {
+	sort!
+	@array.reject! &b
+      }
+    end
+
+    def size
+      synchronize { @array.size }
+    end
+
+    private
+    def sort!
+      return unless @unsorted
+
+      @array.sort!
+      @unsorted = false
+    end
   end
 
   # {{{1 Main code
