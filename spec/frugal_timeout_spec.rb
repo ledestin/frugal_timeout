@@ -9,6 +9,7 @@ Thread.abort_on_exception = true
 
 SMALLEST_TIMEOUT = 0.0000001
 
+# {{{1 Methods
 def multiple_timeouts growing, cnt
   res, resMutex = [], Mutex.new
   if growing
@@ -33,6 +34,7 @@ def new_timeout_request_thread sec, res, resMutex
   Thread.new { new_timeout_request sec, res, resMutex }
 end
 
+# {{{1 FrugalTimeout
 describe FrugalTimeout do
   it 'handles multiple < 1 sec timeouts correctly' do
     LargeDelay, SmallDelay = 0.44, 0.1
@@ -148,6 +150,7 @@ describe FrugalTimeout do
   end
 end
 
+# {{{1 SleeperNotifier
 describe FrugalTimeout::SleeperNotifier do
   queue = Queue.new
   sleeper = FrugalTimeout::SleeperNotifier.new queue
@@ -169,6 +172,7 @@ describe FrugalTimeout::SleeperNotifier do
   end
 end
 
+# {{{1 MonotonicTime
 describe FrugalTimeout::MonotonicTime do
   it 'ticks properly' do
     start = FrugalTimeout::MonotonicTime.now
@@ -182,6 +186,7 @@ describe FrugalTimeout::MonotonicTime do
   end
 end
 
+# {{{1 Request
 describe FrugalTimeout::Request do
   it '#done! and #done? work' do
     req = FrugalTimeout::Request.new(Thread.current,
@@ -192,6 +197,7 @@ describe FrugalTimeout::Request do
   end
 end
 
+# {{{1 SortedQueue
 describe FrugalTimeout::SortedQueue do
   before :each do
     @queue = FrugalTimeout::SortedQueue.new
