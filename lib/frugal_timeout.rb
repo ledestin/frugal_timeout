@@ -172,30 +172,22 @@ module FrugalTimeout
 
   # {{{2 Timeout request and expiration processing thread
   Thread.new {
-    nearestTimeout, requests = nil, []
+    requests = SortedQueue.new
     loop {
       request = @in.shift
       now = MonotonicTime.now
 
       if request == :expired
 	# Enforce all expired timeouts.
-	requests.sort!
-	requests.each_with_index { |r, i|
+	requests.reject! { |r|
 	  break if r.at > now
 
 	  r.enforceTimeout
-	  requests[i] = nil
+	  true
 	}
-	requests.compact!
 
 	# Activate the nearest non-expired timeout.
-	nearestTimeout = unless requests.first
-	  nil
-	else
-	  @sleeper.notifyAfter requests.first.at - now
-	  requests.first.at
-	end
-
+	@sleeper.notifyAfter requests.first.at - now if requests.first
 	next
       end
 
@@ -209,10 +201,7 @@ module FrugalTimeout
       # Queue new timeout for later enforcing. Activate if it's nearest to
       # enforce.
       requests << request
-      next if nearestTimeout && request.at > nearestTimeout
-
-      @sleeper.notifyAfter request.at - now
-      nearestTimeout = request.at
+      @sleeper.notifyAfter request.at - now if requests.first == request
     }
   }
 
