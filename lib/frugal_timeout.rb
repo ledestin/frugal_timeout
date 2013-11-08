@@ -50,38 +50,48 @@ module FrugalTimeout
   end
   # {{{1 SortedQueue
   class SortedQueue
-    extend Forwardable
-    def_delegators :@array, :size
+    include MonitorMixin
 
     def initialize storage=[]
+      super()
       @array, @unsorted = storage, false
     end
 
     def first
-      @array.first
+      synchronize { @array.first }
     end
 
     def last
-      sort!
-      @array.last
+      synchronize {
+	sort!
+	@array.last
+      }
     end
 
     def push *args
-      args.each { |arg|
-	case @array.first <=> arg
-	when -1, 0, nil
-	  @array.push arg
-	when 1
-	  @array.unshift arg
-	end
+      synchronize {
+	args.each { |arg|
+	  case @array.first <=> arg
+	  when -1, 0, nil
+	    @array.push arg
+	  when 1
+	    @array.unshift arg
+	  end
+	}
+	@unsorted = true
       }
-      @unsorted = true
     end
     alias :<< :push
 
     def reject! &b
-      sort!
-      @array.reject! &b
+      synchronize {
+	sort!
+	@array.reject! &b
+      }
+    end
+
+    def size
+      synchronize { @array.size }
     end
 
     private
@@ -170,42 +180,28 @@ module FrugalTimeout
   # {{{1 Main code
   @in = ::Queue.new
   @sleeper = SleeperNotifier.new @in
+  @requests = SortedQueue.new
 
-  # {{{2 Timeout request and expiration processing thread
+  # {{{2 Timeout request expiration processing thread
   Thread.new {
-    requests = SortedQueue.new
     loop {
-      request = @in.shift
+      @in.shift
       now = MonotonicTime.now
 
-      if request == :expired
-	# Enforce all expired timeouts.
-	requests.reject! { |r|
-	  break if r.at > now
+      # Enforce all expired timeouts.
+      @requests.reject! { |r|
+	break if r.at > now
 
-	  r.enforceTimeout
-	  true
-	}
+	r.enforceTimeout
+	true
+      }
 
-	# Activate the nearest non-expired timeout.
-	@sleeper.notifyAfter requests.first.at - now if requests.first
-	next
-      end
-
-      # New timeout request.
-      # Already expired, enforce right away.
-      if request.at <= now
-	request.enforceTimeout
-	next
-      end
-
-      # Queue new timeout for later enforcing. Activate if it's nearest to
-      # enforce.
-      requests << request
-      @sleeper.notifyAfter request.at - now if requests.first == request
+      # Activate the nearest non-expired timeout.
+      @requests.synchronize {
+	@sleeper.notifyAfter @requests.first.at - now if @requests.first
+      }
     }
   }
-
 
   # {{{2 Methods
 
@@ -221,8 +217,12 @@ module FrugalTimeout
   def self.timeout sec, klass=Error
     return yield sec if sec == nil || sec <= 0
 
-    @in.push request = Request.new(Thread.current, MonotonicTime.now + sec,
-      klass)
+    request = nil
+    @requests.synchronize {
+      now = MonotonicTime.now
+      @requests << (request = Request.new(Thread.current, now + sec, klass))
+      @sleeper.notifyAfter sec if @requests.first == request
+    }
     begin
       yield sec
     ensure
