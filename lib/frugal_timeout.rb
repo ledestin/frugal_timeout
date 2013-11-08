@@ -215,7 +215,7 @@ module FrugalTimeout
 
   # Same as Timeout.timeout()
   def self.timeout sec, klass=Error
-    return yield sec if sec == nil || sec <= 0
+    return yield sec if sec.nil? || sec <= 0
 
     request = nil
     @requests.synchronize {
