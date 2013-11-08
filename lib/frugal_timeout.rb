@@ -102,6 +102,7 @@ module FrugalTimeout
 
     def initialize thread, at, klass
       @thread, @at, @klass = thread, at, klass
+      @done = false
     end
 
     def <=>(other)

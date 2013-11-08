@@ -182,6 +182,16 @@ describe FrugalTimeout::MonotonicTime do
   end
 end
 
+describe FrugalTimeout::Request do
+  it '#done! and #done? work' do
+    req = FrugalTimeout::Request.new(Thread.current,
+      FrugalTimeout::MonotonicTime.now, FrugalTimeout::Error)
+    req.done?.should == false
+    req.done!
+    req.done?.should == true
+  end
+end
+
 describe FrugalTimeout::SortedQueue do
   before :each do
     @queue = FrugalTimeout::SortedQueue.new
