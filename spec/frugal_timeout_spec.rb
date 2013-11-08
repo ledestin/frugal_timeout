@@ -150,28 +150,6 @@ describe FrugalTimeout do
   end
 end
 
-# {{{1 SleeperNotifier
-describe FrugalTimeout::SleeperNotifier do
-  queue = Queue.new
-  sleeper = FrugalTimeout::SleeperNotifier.new queue
-
-  it 'sends notification after delay passed' do
-    start = Time.now
-    sleeper.notifyAfter 0.5
-    queue.shift
-    (Time.now - start - 0.5).round(2).should <= 0.01
-  end
-
-  it 'sends notification one time only for multiple requests' do
-    5.times { sleeper.notifyAfter 0.5 }
-    sleeper.notifyAfter 0.4
-    start = Time.now
-    queue.shift
-    (Time.now - start).round(1).should == 0.4
-    queue.size.should == 0
-  end
-end
-
 # {{{1 MonotonicTime
 describe FrugalTimeout::MonotonicTime do
   it 'ticks properly' do
@@ -194,6 +172,28 @@ describe FrugalTimeout::Request do
     req.done?.should == false
     req.done!
     req.done?.should == true
+  end
+end
+
+# {{{1 SleeperNotifier
+describe FrugalTimeout::SleeperNotifier do
+  queue = Queue.new
+  sleeper = FrugalTimeout::SleeperNotifier.new queue
+
+  it 'sends notification after delay passed' do
+    start = Time.now
+    sleeper.notifyAfter 0.5
+    queue.shift
+    (Time.now - start - 0.5).round(2).should <= 0.01
+  end
+
+  it 'sends notification one time only for multiple requests' do
+    5.times { sleeper.notifyAfter 0.5 }
+    sleeper.notifyAfter 0.4
+    start = Time.now
+    queue.shift
+    (Time.now - start).round(1).should == 0.4
+    queue.size.should == 0
   end
 end
 
