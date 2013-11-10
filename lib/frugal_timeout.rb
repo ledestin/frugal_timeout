@@ -80,7 +80,7 @@ module FrugalTimeout
   end
 
   # {{{1 RequestHandler
-  class RequestHandler
+  class RequestHandler # :nodoc:
     def initialize requests, sleeper
       @requests, @sleeper = requests, sleeper
     end
@@ -157,7 +157,7 @@ module FrugalTimeout
   end
 
   # {{{1 SortedQueue
-  class SortedQueue
+  class SortedQueue # :nodoc:
     include MonitorMixin
 
     def initialize storage=[]
