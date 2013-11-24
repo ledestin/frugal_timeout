@@ -90,9 +90,62 @@ module FrugalTimeout
       @requests.synchronize {
 	@requests << (request = Request.new(Thread.current,
 	  MonotonicTime.now + sec, klass))
-	@sleeper.notifyAfter sec if @requests.first == request
+	@sleeper.notify if @requests.first == request
 	request
       }
+    end
+  end
+
+  # {{{1 SleeperNotifier
+  class SleeperNotifier # :nodoc:
+    include MonitorMixin
+
+    def initialize requests
+      super()
+      @requests = requests
+      @rd, @wr = IO.pipe
+      @rds = [@rd]
+
+      @thread = Thread.new {
+	loop {
+	  sleepFor = latestDelay
+	  sleptFor = MonotonicTime.measure {
+	    select(@rds, nil, nil, sleepFor)
+	  }
+	  emptyRd
+
+	  purgeExpired if sleepFor && sleptFor >= sleepFor
+	}
+      }
+      ObjectSpace.define_finalizer self, proc { @thread.kill }
+    end
+
+    def emptyRd
+      @rd.read_nonblock 1024
+    rescue Errno::EINTR
+      retry
+    rescue IO::WaitReadable
+      # Finished reading, nothing left.
+    end
+    private :emptyRd
+
+    def latestDelay
+      synchronize {
+	return if @requests.empty?
+
+	delay = @requests.first.at - MonotonicTime.now
+	delay < 0 ? 0 : delay
+      }
+    end
+    private :latestDelay
+
+    def notify
+      @wr.write_nonblock '.'
+    rescue Errno::EINTR
+      retry
+    rescue IO::WaitReadable
+      # Pipe is full, @latestDelay will be picked up even without this
+      # write, so happily continue.
     end
 
     def purgeExpired
@@ -105,56 +158,8 @@ module FrugalTimeout
 	r.enforceTimeout
 	true
       }
-
-      # Activate the nearest non-expired timeout.
-      @requests.synchronize {
-	@sleeper.notifyAfter @requests.first.at - now if @requests.first
-      }
     end
-  end
-
-  # {{{1 SleeperNotifier
-  class SleeperNotifier # :nodoc:
-    include MonitorMixin
-
-    def initialize notifyQueue
-      super()
-      @notifyQueue = notifyQueue
-      @latestDelay = nil
-
-      @thread = Thread.new {
-	loop {
-	  unless sleepFor = latestDelay
-	    sleep
-	  else
-	    sleptFor = MonotonicTime.measure { sleep(sleepFor) }
-	  end
-	  synchronize {
-	    @notifyQueue.push :expired if sleepFor && sleptFor >= sleepFor
-	  }
-	}
-      }
-      ObjectSpace.define_finalizer self, proc { @thread.kill }
-    end
-
-    def latestDelay
-      synchronize {
-	tmp = @latestDelay
-	@latestDelay = nil
-	tmp
-      }
-    end
-    private :latestDelay
-
-    def notifyAfter sec
-      synchronize {
-	sleep 0.01 until @thread.status == 'sleep'
-	sec = 0 if sec < 0
-	@latestDelay = sec
-	@thread.wakeup
-      }
-    end
-    private :synchronize
+    private :purgeExpired
   end
 
   # {{{1 SortedQueue
@@ -164,6 +169,10 @@ module FrugalTimeout
     def initialize storage=[]
       super()
       @array, @unsorted = storage, false
+    end
+
+    def empty?
+      synchronize { @array.empty? }
     end
 
     def first
@@ -213,17 +222,8 @@ module FrugalTimeout
   end
 
   # {{{1 Main code
-  @in = ::Queue.new
-  @requestQueue = RequestQueue.new(SortedQueue.new,
-    SleeperNotifier.new(@in))
-
-  # {{{2 Timeout request expiration processing thread
-  Thread.new {
-    loop {
-      @in.shift
-      @requestQueue.purgeExpired
-    }
-  }
+  requests = SortedQueue.new
+  @requestQueue = RequestQueue.new(requests, SleeperNotifier.new(requests))
 
   # {{{2 Methods
 
