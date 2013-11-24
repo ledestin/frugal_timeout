@@ -5,13 +5,13 @@ frugal_timeout
 [![Coverage Status] (https://coveralls.io/repos/ledestin/frugal_timeout/badge.png)] (https://coveralls.io/r/ledestin/frugal_timeout)
 [![Code Climate](https://codeclimate.com/github/ledestin/frugal_timeout.png)](https://codeclimate.com/github/ledestin/frugal_timeout)
 
-Ruby Timeout.timeout replacement using only 2 threads
+Ruby Timeout.timeout replacement using only 1 thread
 
 ## Why
 
 As you may know, the stock Timeout.timeout uses thread per timeout call. If you
 use it a lot, you will soon be out of threads. This gem is to provide an
-alternative that uses only 2 threads.
+alternative that uses only 1 thread.
 
 ## Example
 
