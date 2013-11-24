@@ -57,24 +57,24 @@ module FrugalTimeout
 
     def initialize thread, at, klass
       @thread, @at, @klass = thread, at, klass
-      @done = false
+      @defused = false
     end
 
     def <=>(other)
       @at <=> other.at
     end
 
-    def done!
-      @@mutex.synchronize { @done = true }
+    def defuse!
+      @@mutex.synchronize { @defused = true }
     end
 
-    def done?
-      @@mutex.synchronize { @done }
+    def defused?
+      @@mutex.synchronize { @defused }
     end
 
     def enforceTimeout
       @@mutex.synchronize {
-	@thread.raise @klass, 'execution expired' unless @done
+	@thread.raise @klass, 'execution expired' unless @defused
       }
     end
   end
@@ -242,7 +242,7 @@ module FrugalTimeout
     begin
       yield sec
     ensure
-      request.done! unless $!.is_a? FrugalTimeout::Error
+      request.defuse!
     end
   end
   # }}}1

@@ -166,12 +166,12 @@ end
 
 # {{{1 Request
 describe FrugalTimeout::Request do
-  it '#done! and #done? work' do
+  it '#defuse! and #defused? work' do
     req = FrugalTimeout::Request.new(Thread.current,
       FrugalTimeout::MonotonicTime.now, FrugalTimeout::Error)
-    req.done?.should == false
-    req.done!
-    req.done?.should == true
+    req.defused?.should == false
+    req.defuse!
+    req.defused?.should == true
   end
 end
 
