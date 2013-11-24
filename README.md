@@ -34,3 +34,9 @@ rescue FrugalTimeout::Error
   puts 'yay!'
 end
 ```
+
+## Installation
+
+```
+gem install frugal_timeout
+```
