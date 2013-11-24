@@ -148,16 +148,24 @@ module FrugalTimeout
       # write, so happily continue.
     end
 
+    # Enforce all expired timeouts (but only one exception per thread is
+    # raised).
     def purgeExpired
       now = MonotonicTime.now
 
-      # Enforce all expired timeouts.
+      expired = []
       @requests.reject! { |r|
 	break if r.at > now
 
-	r.enforceTimeout
+	expired << r
 	true
       }
+      return unless expired
+
+      # Ensure that a thread is notified only once, even if multiple timeouts
+      # for that thread expire at once.
+      expired.uniq! { |r| r.thread }
+      expired.each { |r| r.enforceTimeout }
     end
     private :purgeExpired
   end
