@@ -37,6 +37,9 @@ end
 
 ## Installation
 
+Tested on Ruby 1.9.3 and 2.0.0, but may work on 1.8 as well (tests will not work
+though).
+
 ```
 gem install frugal_timeout
 ```
