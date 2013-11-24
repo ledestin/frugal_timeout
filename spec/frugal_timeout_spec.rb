@@ -204,7 +204,13 @@ describe FrugalTimeout::SleeperNotifier do
   end
 
   it 'sends notification one time only for multiple requests' do
-    5.times { addRequest 0.5 }
+    5.times {
+      addRequest 0.5
+      begin
+	sleep
+      rescue FrugalTimeout::Error
+      end
+    }
     addRequest 0.4
     start = Time.now
     expect { sleep }.to raise_error FrugalTimeout::Error
