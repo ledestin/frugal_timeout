@@ -79,13 +79,13 @@ module FrugalTimeout
     end
   end
 
-  # {{{1 RequestHandler
-  class RequestHandler # :nodoc:
+  # {{{1 RequestQueue
+  class RequestQueue # :nodoc:
     def initialize requests, sleeper
       @requests, @sleeper = requests, sleeper
     end
 
-    def addRequest sec, klass
+    def queue sec, klass
       @requests.synchronize {
 	@requests << (request = Request.new(Thread.current,
 	  MonotonicTime.now + sec, klass))
@@ -213,14 +213,14 @@ module FrugalTimeout
 
   # {{{1 Main code
   @in = ::Queue.new
-  @requestHandler = RequestHandler.new(SortedQueue.new,
+  @requestQueue = RequestQueue.new(SortedQueue.new,
     SleeperNotifier.new(@in))
 
   # {{{2 Timeout request expiration processing thread
   Thread.new {
     loop {
       @in.shift
-      @requestHandler.purgeExpired
+      @requestQueue.purgeExpired
     }
   }
 
@@ -238,7 +238,7 @@ module FrugalTimeout
   def self.timeout sec, klass=Error
     return yield sec if sec.nil? || sec <= 0
 
-    request = @requestHandler.addRequest(sec, klass)
+    request = @requestQueue.queue(sec, klass)
     begin
       yield sec
     ensure
