@@ -94,28 +94,16 @@ module FrugalTimeout
       @onNewNearestRequest = b
     end
 
-    # Remove and enforce all expired timeouts (but raise only one exception per
-    # thread).
+    # Purge and enforce expired timeouts. Only enforce once for each thread,
+    # even if multiple timeouts for that thread expire at once.
     def purgeExpired
-      expired, now = [], MonotonicTime.now
-      @requests.reject! { |r|
-	break if r.at > now
+      notified, now = {}, MonotonicTime.now
+      @requests.reject_and_get! { |r| r.at <= now }.each { |r|
+	next if notified[r.thread]
 
-	expired << r
-	true
+	r.enforceTimeout
+	notified[r.thread] = true
       }
-
-      unless expired.empty?
-	# Ensure that a thread is notified only once, even if multiple timeouts
-	# for that thread expire at once.
-	notified = {}
-	expired.each { |r|
-	  next if notified[r.thread]
-
-	  r.enforceTimeout
-	  notified[r.thread] = true
-	}
-      end
 
       @onNewNearestRequest.call(@requests.first) unless @requests.empty?
     end
@@ -242,6 +230,16 @@ module FrugalTimeout
 	sort!
 	@array.reject! &b
       }
+    end
+
+    def reject_and_get! &b
+      res = []
+      reject! { |el|
+	break unless b.call el
+
+	res << el
+      }
+      res
     end
 
     def size

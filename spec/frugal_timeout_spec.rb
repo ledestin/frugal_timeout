@@ -287,4 +287,12 @@ describe FrugalTimeout::SortedQueue do
       @queue.first == 'a'
     }.not_to raise_error
   end
+
+  it '#reject_and_get!' do
+    @queue.push 'a'
+    @queue.push 'b'
+    res = @queue.reject_and_get! { |el| el < 'b' }
+    res.size.should == 1
+    res.first.should == 'a'
+  end
 end
