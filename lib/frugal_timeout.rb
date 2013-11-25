@@ -105,7 +105,9 @@ module FrugalTimeout
 	notified[r.thread] = true
       }
 
-      @onNewNearestRequest.call(@requests.first) unless @requests.empty?
+      @requests.synchronize {
+	@onNewNearestRequest.call(@requests.first) unless @requests.empty?
+      }
     end
 
     def queue sec, klass
