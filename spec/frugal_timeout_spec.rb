@@ -181,6 +181,26 @@ describe FrugalTimeout::Request do
   end
 end
 
+# {{{1 RequestQueue
+describe FrugalTimeout::RequestQueue do
+  before :each do
+    @ar = []
+    @requests = FrugalTimeout::RequestQueue.new
+    @requests.onNewNearestRequest { |request|
+      @ar << request
+    }
+  end
+
+  context 'always invokes callback after purging' do
+    [[10, "didn't expire yet"], [0, 'expired']].each { |sec, msg|
+      it "when request #{msg}" do
+	req = @requests.queue(sec, FrugalTimeout::Error)
+	@ar.size.should == 1
+      end
+    }
+  end
+end
+
 # {{{1 SleeperNotifier
 describe FrugalTimeout::SleeperNotifier do
   before :all do

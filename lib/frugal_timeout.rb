@@ -104,17 +104,19 @@ module FrugalTimeout
 	expired << r
 	true
       }
-      return if expired.empty?
 
-      # Ensure that a thread is notified only once, even if multiple timeouts
-      # for that thread expire at once.
-      notified = {}
-      expired.each { |r|
-	next if notified[r.thread]
+      unless expired.empty?
+	# Ensure that a thread is notified only once, even if multiple timeouts
+	# for that thread expire at once.
+	notified = {}
+	expired.each { |r|
+	  next if notified[r.thread]
 
-	r.enforceTimeout
-	notified[r.thread] = true
-      }
+	  r.enforceTimeout
+	  notified[r.thread] = true
+	}
+      end
+
       @onNewNearestRequest.call(@requests.first) unless @requests.empty?
     end
 
