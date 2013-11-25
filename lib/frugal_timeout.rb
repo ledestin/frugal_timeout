@@ -87,11 +87,11 @@ module FrugalTimeout
     def_delegators :@requests, :empty?, :first, :<<
 
     def initialize
-      @requests = SortedQueue.new
+      @onNewNearestRequest, @requests = proc {}, SortedQueue.new
     end
 
-    def onNewAndNearestRequest &b
-      @onNewAndNearestRequest = b
+    def onNewNearestRequest &b
+      @onNewNearestRequest = b
     end
 
     # Remove and enforce all expired timeouts (but raise only one exception per
@@ -115,14 +115,15 @@ module FrugalTimeout
 	r.enforceTimeout
 	notified[r.thread] = true
       }
+      @onNewNearestRequest.call(@requests.first) unless @requests.empty?
     end
 
     def queue sec, klass
       @requests.synchronize {
 	@requests << (request = Request.new(Thread.current,
 	  MonotonicTime.now + sec, klass))
-	@onNewAndNearestRequest.call \
-	  if @onNewAndNearestRequest && @requests.first == request
+	@onNewNearestRequest.call(@requests.first) \
+	  if @requests.first == request
 	request
       }
     end
@@ -132,9 +133,9 @@ module FrugalTimeout
   class SleeperNotifier # :nodoc:
     include MonitorMixin
 
-    def initialize requests
+    def initialize
       super()
-      @requests = requests
+      @onExpiry, @request = proc {}, nil
       @rd, @wr = IO.pipe
       @rds = [@rd]
 
@@ -146,7 +147,10 @@ module FrugalTimeout
 	  }
 	  emptyRd
 
-	  @requests.purgeExpired if sleepFor && sleptFor >= sleepFor
+	  if sleepFor && sleptFor >= sleepFor
+	    synchronize { @request = nil }
+	    @onExpiry.call
+	  end
 	}
       }
       ObjectSpace.define_finalizer self, proc { @thread.kill }
@@ -163,9 +167,9 @@ module FrugalTimeout
 
     def latestDelay
       synchronize {
-	return if @requests.empty?
+	return unless @request
 
-	delay = @requests.first.at - MonotonicTime.now
+	delay = @request.at - MonotonicTime.now
 	delay < 0 ? 0 : delay
       }
     end
@@ -178,6 +182,18 @@ module FrugalTimeout
     rescue IO::WaitReadable
       # Pipe is full, @latestDelay will be picked up even without this
       # write, so happily continue.
+    end
+    private :notify
+
+    def onExpiry &b
+      @onExpiry = b
+    end
+
+    def sleepUntilExpires request
+      synchronize {
+	@request = request
+	notify
+      }
     end
   end
 
@@ -242,8 +258,11 @@ module FrugalTimeout
 
   # {{{1 Main code
   @requestQueue = RequestQueue.new
-  sleeper = SleeperNotifier.new(@requestQueue)
-  @requestQueue.onNewAndNearestRequest { sleeper.notify }
+  sleeper = SleeperNotifier.new
+  @requestQueue.onNewNearestRequest { |request|
+    sleeper.sleepUntilExpires request
+  }
+  sleeper.onExpiry { @requestQueue.purgeExpired }
 
   # {{{2 Methods
 

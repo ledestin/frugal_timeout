@@ -184,44 +184,38 @@ end
 # {{{1 SleeperNotifier
 describe FrugalTimeout::SleeperNotifier do
   before :all do
-    @requests = FrugalTimeout::RequestQueue.new
-    @sleeper = FrugalTimeout::SleeperNotifier.new(@requests)
-    @requests.onNewAndNearestRequest { @sleeper.notify }
+    @queue = Queue.new
+    @sleeper = FrugalTimeout::SleeperNotifier.new
+    @sleeper.onExpiry { @queue.push '.' }
   end
 
   def addRequest sec
-    @requests << FrugalTimeout::Request.new(Thread.current,
+    req = FrugalTimeout::Request.new(Thread.current,
       FrugalTimeout::MonotonicTime.now + sec,
       FrugalTimeout::Error)
-    @sleeper.notify
+    @sleeper.sleepUntilExpires req
   end
 
   it 'sends notification after delay passed' do
     start = Time.now
     addRequest 0.5
-    expect { sleep }.to raise_error FrugalTimeout::Error
+    @queue.shift
     (Time.now - start - 0.5).round(2).should <= 0.01
   end
 
   it 'handles negative delay' do
     FrugalTimeout::MonotonicTime.measure {
       addRequest -1
-      expect { sleep }.to raise_error FrugalTimeout::Error
+      @queue.shift
     }.round(1).should == 0
   end
 
   it 'sends notification one time only for multiple requests' do
-    5.times {
-      addRequest 0.5
-      begin
-	sleep
-      rescue FrugalTimeout::Error
-      end
-    }
-    addRequest 0.4
+    5.times { addRequest 0.5 }
     start = Time.now
-    expect { sleep }.to raise_error FrugalTimeout::Error
-    (Time.now - start).round(1).should == 0.4
+    @queue.shift
+    (Time.now - start).round(1).should == 0.5
+    @queue.should be_empty
   end
 end
 
