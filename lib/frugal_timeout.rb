@@ -82,15 +82,47 @@ module FrugalTimeout
 
   # {{{1 RequestQueue
   class RequestQueue # :nodoc:
-    def initialize requests, sleeper
-      @requests, @sleeper = requests, sleeper
+    extend Forwardable
+
+    def_delegators :@requests, :empty?, :first, :<<
+
+    def initialize
+      @requests = SortedQueue.new
+    end
+
+    def onNewAndNearestRequest &b
+      @onNewAndNearestRequest = b
+    end
+
+    # Remove and enforce all expired timeouts (but raise only one exception per
+    # thread).
+    def purgeExpired
+      expired, now = [], MonotonicTime.now
+      @requests.reject! { |r|
+	break if r.at > now
+
+	expired << r
+	true
+      }
+      return if expired.empty?
+
+      # Ensure that a thread is notified only once, even if multiple timeouts
+      # for that thread expire at once.
+      notified = {}
+      expired.each { |r|
+	next if notified[r.thread]
+
+	r.enforceTimeout
+	notified[r.thread] = true
+      }
     end
 
     def queue sec, klass
       @requests.synchronize {
 	@requests << (request = Request.new(Thread.current,
 	  MonotonicTime.now + sec, klass))
-	@sleeper.notify if @requests.first == request
+	@onNewAndNearestRequest.call \
+	  if @onNewAndNearestRequest && @requests.first == request
 	request
       }
     end
@@ -114,7 +146,7 @@ module FrugalTimeout
 	  }
 	  emptyRd
 
-	  purgeExpired if sleepFor && sleptFor >= sleepFor
+	  @requests.purgeExpired if sleepFor && sleptFor >= sleepFor
 	}
       }
       ObjectSpace.define_finalizer self, proc { @thread.kill }
@@ -147,32 +179,6 @@ module FrugalTimeout
       # Pipe is full, @latestDelay will be picked up even without this
       # write, so happily continue.
     end
-
-    # Enforce all expired timeouts (but only one exception per thread is
-    # raised).
-    def purgeExpired
-      now = MonotonicTime.now
-
-      expired = []
-      @requests.reject! { |r|
-	break if r.at > now
-
-	expired << r
-	true
-      }
-      return unless expired
-
-      # Ensure that a thread is notified only once, even if multiple timeouts
-      # for that thread expire at once.
-      notified = {}
-      expired.each { |r|
-	next if notified[r.thread]
-
-	r.enforceTimeout
-	notified[r.thread] = true
-      }
-    end
-    private :purgeExpired
   end
 
   # {{{1 SortedQueue
@@ -235,8 +241,9 @@ module FrugalTimeout
   end
 
   # {{{1 Main code
-  requests = SortedQueue.new
-  @requestQueue = RequestQueue.new(requests, SleeperNotifier.new(requests))
+  @requestQueue = RequestQueue.new
+  sleeper = SleeperNotifier.new(@requestQueue)
+  @requestQueue.onNewAndNearestRequest { sleeper.notify }
 
   # {{{2 Methods
 

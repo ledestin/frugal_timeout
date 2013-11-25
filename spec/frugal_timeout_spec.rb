@@ -184,8 +184,9 @@ end
 # {{{1 SleeperNotifier
 describe FrugalTimeout::SleeperNotifier do
   before :all do
-    @requests = FrugalTimeout::SortedQueue.new
+    @requests = FrugalTimeout::RequestQueue.new
     @sleeper = FrugalTimeout::SleeperNotifier.new(@requests)
+    @requests.onNewAndNearestRequest { @sleeper.notify }
   end
 
   def addRequest sec
