@@ -164,8 +164,13 @@ module FrugalTimeout
 
       # Ensure that a thread is notified only once, even if multiple timeouts
       # for that thread expire at once.
-      expired.uniq! { |r| r.thread }
-      expired.each { |r| r.enforceTimeout }
+      notified = {}
+      expired.each { |r|
+	next if notified[r.thread]
+
+	r.enforceTimeout
+	notified[r.thread] = true
+      }
     end
     private :purgeExpired
   end
