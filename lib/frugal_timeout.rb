@@ -2,6 +2,7 @@
 
 require 'hitimes'
 require 'monitor'
+require 'null_object'
 require 'thread'
 require 'timeout'
 
@@ -73,9 +74,12 @@ module FrugalTimeout
       @@mutex.synchronize { @defused }
     end
 
-    def enforceTimeout
+    def enforceTimeout filter=NullObject.new { nil }
       @@mutex.synchronize {
-	@thread.raise @klass, 'execution expired' unless @defused
+	return if @defused || filter.has_key?(@thread)
+
+	filter[@thread] = true
+	@thread.raise @klass, 'execution expired'
       }
     end
   end
@@ -97,12 +101,9 @@ module FrugalTimeout
     # Purge and enforce expired timeouts. Only enforce once for each thread,
     # even if multiple timeouts for that thread expire at once.
     def purgeExpired
-      notified, now = {}, MonotonicTime.now
+      filter, now = {}, MonotonicTime.now
       @requests.reject_and_get! { |r| r.at <= now }.each { |r|
-	next if notified[r.thread]
-
-	r.enforceTimeout
-	notified[r.thread] = true
+	r.enforceTimeout filter
       }
 
       @requests.synchronize {
