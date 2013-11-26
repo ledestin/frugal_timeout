@@ -74,7 +74,7 @@ module FrugalTimeout
       @@mutex.synchronize { @defused }
     end
 
-    def enforceTimeout filter=NullObject.new { nil }
+    def enforceTimeout filter=NullObject.new {}
       @@mutex.synchronize {
 	return if @defused || filter.has_key?(@thread)
 
