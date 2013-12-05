@@ -9,7 +9,7 @@ require 'timeout'
 #--
 # {{{1 Rdoc
 #++
-# Timeout.timeout() replacement using only 2 threads
+# Timeout.timeout() replacement using only 1 thread
 # = Example
 #
 #   require 'frugal_timeout'
