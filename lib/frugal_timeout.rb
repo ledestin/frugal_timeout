@@ -127,35 +127,23 @@ module FrugalTimeout
 
     def initialize
       super()
-      @onExpiry, @request = proc {}, nil
-      @rd, @wr = IO.pipe
-      @rds = [@rd]
+      @condVar, @onExpiry, @request = new_cond, proc {}, nil
 
       @thread = Thread.new {
 	loop {
-	  sleepFor = latestDelay
-	  sleptFor = MonotonicTime.measure {
-	    select(@rds, nil, nil, sleepFor)
-	  }
-	  emptyRd
+	  @onExpiry.call if synchronize {
+	    sleepFor = latestDelay
+	    sleptFor = MonotonicTime.measure { @condVar.wait sleepFor }
 
-	  if sleepFor && sleptFor >= sleepFor
-	    synchronize { @request = nil }
-	    @onExpiry.call
-	  end
+	    if sleepFor && sleptFor >= sleepFor
+	      @request = nil
+	      true
+	    end
+	  }
 	}
       }
       ObjectSpace.define_finalizer self, proc { @thread.kill }
     end
-
-    def emptyRd
-      @rd.read_nonblock 1024
-    rescue Errno::EINTR
-      retry
-    rescue IO::WaitReadable
-      # Finished reading, nothing left.
-    end
-    private :emptyRd
 
     def latestDelay
       synchronize {
@@ -168,12 +156,7 @@ module FrugalTimeout
     private :latestDelay
 
     def notify
-      @wr.write_nonblock '.'
-    rescue Errno::EINTR
-      retry
-    rescue IO::WaitReadable
-      # Pipe is full, @latestDelay will be picked up even without this
-      # write, so happily continue.
+      @condVar.signal
     end
     private :notify
 
