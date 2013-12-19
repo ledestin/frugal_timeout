@@ -49,6 +49,7 @@ module FrugalTimeout
       Hitimes::Interval.now.start_instant.to_f/NANOS_IN_SECOND
     end
   end
+
   # {{{1 Request
   class Request # :nodoc:
     include Comparable
