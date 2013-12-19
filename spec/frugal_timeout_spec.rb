@@ -9,7 +9,7 @@ Thread.abort_on_exception = true
 
 SMALLEST_TIMEOUT = 0.0000001
 
-# {{{1 Methods
+# {{{1 Helper methods
 def multiple_timeouts growing, cnt
   res, resMutex = [], Mutex.new
   if growing
