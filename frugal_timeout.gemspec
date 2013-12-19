@@ -1,9 +1,9 @@
 Gem::Specification.new do |s|
   s.name        = 'frugal_timeout'
-  s.version     = '0.0.7'
-  s.date        = '2013-10-20'
+  s.version     = '0.0.8'
+  s.date        = '2013-12-20'
   s.summary     = 'Timeout.timeout replacement'
-  s.description = 'Timeout.timeout replacement that uses only 2 threads'
+  s.description = 'Timeout.timeout replacement that uses only 1 thread'
   s.authors     = ['Dmitry Maksyoma']
   s.email       = 'ledestin@gmail.com'
   s.files       = ['lib/frugal_timeout.rb']
