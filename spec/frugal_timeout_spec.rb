@@ -108,6 +108,24 @@ describe FrugalTimeout do
 	timeout(0.5) { timeout(0.5) { sleep } }
       }.to raise_error FrugalTimeout::Error
     end
+
+    it 'works if recursive timeouts rescue thrown exception' do
+      # A rescue block will only catch exception for the timeout() block it's
+      # written for.
+      expect {
+	timeout(0.5) {
+	  begin
+	    timeout(1) {
+	      begin
+		timeout(2) { sleep }
+	      rescue Timeout::Error
+	      end
+	    }
+	  rescue Timeout::Error
+	  end
+	}
+      }.to raise_error Timeout::Error
+    end
   end
 
   it 'finishes after N sec' do

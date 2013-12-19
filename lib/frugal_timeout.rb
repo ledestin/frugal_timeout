@@ -55,11 +55,11 @@ module FrugalTimeout
     include Comparable
     @@mutex = Mutex.new
 
-    attr_reader :at, :thread
+    attr_reader :at, :exception, :klass, :thread
 
     def initialize thread, at, klass
       @thread, @at, @klass = thread, at, klass
-      @defused = false
+      @defused, @exception = false, Class.new(Timeout::ExitException)
     end
 
     def <=>(other)
@@ -80,7 +80,7 @@ module FrugalTimeout
 	return if @defused || filter.has_key?(@thread)
 
 	filter[@thread] = true
-	@thread.raise @klass, 'execution expired'
+	@thread.raise @exception, 'execution expired'
       }
     end
   end
@@ -270,6 +270,10 @@ module FrugalTimeout
     request = @requestQueue.queue(sec, klass)
     begin
       yield sec
+    rescue request.exception => e
+      raise unless e.is_a? Timeout::ExitException
+
+      raise request.klass, e.message, e.backtrace
     ensure
       request.defuse!
     end
