@@ -102,10 +102,12 @@ describe FrugalTimeout do
     res.each { |sec| (sec - 1).should < 0.01 }
   end
 
-  it 'raises a single exception on same recursive timeouts' do
-    expect {
-      timeout(0.5) { timeout(0.5) { sleep } }
-    }.to raise_error FrugalTimeout::Error
+  context 'recursive timeouts' do
+    it 'raises a single exception on same recursive timeouts' do
+      expect {
+	timeout(0.5) { timeout(0.5) { sleep } }
+      }.to raise_error FrugalTimeout::Error
+    end
   end
 
   it 'finishes after N sec' do
