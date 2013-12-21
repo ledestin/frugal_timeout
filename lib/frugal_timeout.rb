@@ -133,11 +133,14 @@ module FrugalTimeout
       @thread = Thread.new {
 	loop {
 	  @onExpiry.call if synchronize {
+	    # Sleep forever until a request comes in.
+	    @condVar.wait unless @request
+
 	    timeLeft = requestTimeLeft
 	    disposeOfRequest
 	    elapsedTime = MonotonicTime.measure { @condVar.wait timeLeft }
 
-	    timeLeft && elapsedTime >= timeLeft
+	    elapsedTime >= timeLeft
 	  }
 	}
       }
@@ -163,8 +166,6 @@ module FrugalTimeout
 
     def requestTimeLeft
       synchronize {
-	return unless @request
-
 	delay = @request.at - MonotonicTime.now
 	delay < 0 ? 0 : delay
       }
