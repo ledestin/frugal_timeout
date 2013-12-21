@@ -123,6 +123,14 @@ module FrugalTimeout
   end
 
   # {{{1 SleeperNotifier
+  # Executes callback when a request expires.
+  # 1. Set callback to execute with #onExpiry=.
+  # 2. Set request with #setRequest.
+  # 3. After the request expires, execute the callback.
+  #
+  # It's possible to set a new request before the request set previously
+  # expires. In this case, processing of the old request stops and the new
+  # request processing starts.
   class SleeperNotifier # :nodoc:
     include MonitorMixin
 
