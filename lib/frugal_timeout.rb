@@ -133,26 +133,16 @@ module FrugalTimeout
       @thread = Thread.new {
 	loop {
 	  @onExpiry.call if synchronize {
-	    sleepFor = calcDelay
+	    timeLeft = requestTimeLeft
 	    disposeOfRequest
-	    sleptFor = MonotonicTime.measure { @condVar.wait sleepFor }
+	    elapsedTime = MonotonicTime.measure { @condVar.wait timeLeft }
 
-	    sleepFor && sleptFor >= sleepFor
+	    timeLeft && elapsedTime >= timeLeft
 	  }
 	}
       }
       ObjectSpace.define_finalizer self, proc { @thread.kill }
     end
-
-    def calcDelay
-      synchronize {
-	return unless @request
-
-	delay = @request.at - MonotonicTime.now
-	delay < 0 ? 0 : delay
-      }
-    end
-    private :calcDelay
 
     def disposeOfRequest
       @request = nil
@@ -167,6 +157,16 @@ module FrugalTimeout
     def onExpiry &b
       @onExpiry = b
     end
+
+    def requestTimeLeft
+      synchronize {
+	return unless @request
+
+	delay = @request.at - MonotonicTime.now
+	delay < 0 ? 0 : delay
+      }
+    end
+    private :requestTimeLeft
 
     def setRequest request
       synchronize {
