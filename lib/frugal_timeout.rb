@@ -136,10 +136,7 @@ module FrugalTimeout
 	    sleepFor = latestDelay
 	    sleptFor = MonotonicTime.measure { @condVar.wait sleepFor }
 
-	    if sleepFor && sleptFor >= sleepFor
-	      @request = nil
-	      true
-	    end
+	    sleepFor && sleptFor >= sleepFor
 	  }
 	}
       }
@@ -151,6 +148,7 @@ module FrugalTimeout
 	return unless @request
 
 	delay = @request.at - MonotonicTime.now
+	@request = nil
 	delay < 0 ? 0 : delay
       }
     end
