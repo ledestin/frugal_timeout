@@ -144,13 +144,21 @@ module FrugalTimeout
       ObjectSpace.define_finalizer self, proc { @thread.kill }
     end
 
-    def disposeOfRequest
-      @request = nil
-    end
-    private :disposeOfRequest
-
     def onExpiry &b
       @onExpiry = b
+    end
+
+    def setRequest request
+      synchronize {
+	@request = request
+	wakeupThread
+      }
+    end
+
+    private
+
+    def disposeOfRequest
+      @request = nil
     end
 
     def requestTimeLeft
@@ -161,19 +169,10 @@ module FrugalTimeout
 	delay < 0 ? 0 : delay
       }
     end
-    private :requestTimeLeft
-
-    def setRequest request
-      synchronize {
-	@request = request
-	wakeupThread
-      }
-    end
 
     def wakeupThread
       @condVar.signal
     end
-    private :wakeupThread
   end
 
   # {{{1 SortedQueue
