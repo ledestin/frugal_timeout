@@ -125,10 +125,10 @@ module FrugalTimeout
   # {{{1 SleeperNotifier
   # Executes callback when a request expires.
   # 1. Set callback to execute with #onExpiry=.
-  # 2. Set request with #setRequest.
-  # 3. After the request expires, execute the callback.
+  # 2. Set expiry time with #expireAt.
+  # 3. After the expiry time comes, execute the callback.
   #
-  # It's possible to set a new request before the request set previously
+  # It's possible to set a new expiry time before the time set previously
   # expires. In this case, processing of the old request stops and the new
   # request processing starts.
   class SleeperNotifier # :nodoc:
@@ -136,15 +136,15 @@ module FrugalTimeout
 
     def initialize
       super()
-      @condVar, @onExpiry, @request = new_cond, proc {}, nil
+      @condVar, @expireAt, @onExpiry = new_cond, nil, proc {}
 
       @thread = Thread.new {
 	loop {
 	  @onExpiry.call if synchronize {
 	    # Sleep forever until a request comes in.
-	    wait unless @request
+	    wait unless @expireAt
 
-	    timeLeft = requestTimeLeft
+	    timeLeft = calcTimeLeft
 	    disposeOfRequest
 	    elapsedTime = MonotonicTime.measure { wait timeLeft }
 
@@ -159,24 +159,24 @@ module FrugalTimeout
       @onExpiry = b
     end
 
-    def setRequest request
+    def expireAt time
       synchronize {
-	@request = request
+	@expireAt = time
 	signalThread
       }
     end
 
     private
 
-    def disposeOfRequest
-      @request = nil
-    end
-
-    def requestTimeLeft
+    def calcTimeLeft
       synchronize {
-	delay = @request.at - MonotonicTime.now
+	delay = @expireAt - MonotonicTime.now
 	delay < 0 ? 0 : delay
       }
+    end
+
+    def disposeOfRequest
+      @expireAt = nil
     end
 
     def signalThread
@@ -261,7 +261,7 @@ module FrugalTimeout
   @requestQueue = RequestQueue.new
   sleeper = SleeperNotifier.new
   @requestQueue.onNewNearestRequest { |request|
-    sleeper.setRequest request
+    sleeper.expireAt request.at
   }
   sleeper.onExpiry { @requestQueue.purgeExpired }
 
