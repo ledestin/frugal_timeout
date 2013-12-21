@@ -233,7 +233,7 @@ describe FrugalTimeout::SleeperNotifier do
     req = FrugalTimeout::Request.new(Thread.current,
       FrugalTimeout::MonotonicTime.now + sec,
       FrugalTimeout::Error)
-    @sleeper.sleepUntilExpires req
+    @sleeper.setRequest req
   end
 
   it 'sends notification after delay passed' do

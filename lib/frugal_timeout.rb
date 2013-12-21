@@ -163,7 +163,7 @@ module FrugalTimeout
       @onExpiry = b
     end
 
-    def sleepUntilExpires request
+    def setRequest request
       synchronize {
 	@request = request
 	notify
@@ -244,7 +244,7 @@ module FrugalTimeout
   @requestQueue = RequestQueue.new
   sleeper = SleeperNotifier.new
   @requestQueue.onNewNearestRequest { |request|
-    sleeper.sleepUntilExpires request
+    sleeper.setRequest request
   }
   sleeper.onExpiry { @requestQueue.purgeExpired }
 
