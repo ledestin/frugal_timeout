@@ -59,7 +59,7 @@ module FrugalTimeout
 
     def initialize thread, at, klass
       @thread, @at, @klass = thread, at, klass
-      @defused, @exception = false, Class.new(Timeout::ExitException)
+      @defused = false
     end
 
     def <=>(other)
@@ -80,7 +80,7 @@ module FrugalTimeout
 	return if @defused || filter.has_key?(@thread)
 
 	filter[@thread] = true
-	@thread.raise @exception, 'execution expired'
+	@thread.raise @klass, 'execution expired'
       }
     end
   end
@@ -267,11 +267,12 @@ module FrugalTimeout
   def self.timeout sec, klass=Error
     return yield sec if sec.nil? || sec <= 0
 
-    request = @requestQueue.queue(sec, klass)
+    innerException = Class.new Timeout::ExitException
+    request = @requestQueue.queue(sec, innerException)
     begin
       yield sec
-    rescue request.exception => e
-      raise request.klass, e.message, e.backtrace
+    rescue innerException => e
+      raise klass, e.message, e.backtrace
     ensure
       request.defuse!
     end
