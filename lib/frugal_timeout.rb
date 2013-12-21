@@ -165,9 +165,6 @@ module FrugalTimeout
       @onExpiry = b
     end
 
-    # 1. Send any request.
-    # 2. Send only nearer (than the first request) expiration times.
-    # 3. The latest passed request expires and @onExpiry is called. Goto 1.
     def sleepUntilExpires request
       synchronize {
 	@request = request
