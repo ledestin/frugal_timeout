@@ -134,11 +134,11 @@ module FrugalTimeout
 	loop {
 	  @onExpiry.call if synchronize {
 	    # Sleep forever until a request comes in.
-	    @condVar.wait unless @request
+	    wait unless @request
 
 	    timeLeft = requestTimeLeft
 	    disposeOfRequest
-	    elapsedTime = MonotonicTime.measure { @condVar.wait timeLeft }
+	    elapsedTime = MonotonicTime.measure { wait timeLeft }
 
 	    elapsedTime >= timeLeft
 	  }
@@ -154,7 +154,7 @@ module FrugalTimeout
     def setRequest request
       synchronize {
 	@request = request
-	wakeupThread
+	signalThread
       }
     end
 
@@ -171,8 +171,12 @@ module FrugalTimeout
       }
     end
 
-    def wakeupThread
+    def signalThread
       @condVar.signal
+    end
+
+    def wait sec=nil
+      @condVar.wait sec
     end
   end
 
