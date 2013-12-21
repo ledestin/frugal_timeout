@@ -149,11 +149,6 @@ module FrugalTimeout
     end
     private :disposeOfRequest
 
-    def notify
-      @condVar.signal
-    end
-    private :notify
-
     def onExpiry &b
       @onExpiry = b
     end
@@ -171,9 +166,14 @@ module FrugalTimeout
     def setRequest request
       synchronize {
 	@request = request
-	notify
+	wakeupThread
       }
     end
+
+    def wakeupThread
+      @condVar.signal
+    end
+    private :wakeupThread
   end
 
   # {{{1 SortedQueue
