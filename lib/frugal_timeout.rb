@@ -271,8 +271,6 @@ module FrugalTimeout
     begin
       yield sec
     rescue request.exception => e
-      raise unless e.is_a? Timeout::ExitException
-
       raise request.klass, e.message, e.backtrace
     ensure
       request.defuse!
