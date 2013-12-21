@@ -133,7 +133,8 @@ module FrugalTimeout
       @thread = Thread.new {
 	loop {
 	  @onExpiry.call if synchronize {
-	    sleepFor = latestDelay
+	    sleepFor = calcDelay
+	    disposeOfRequest
 	    sleptFor = MonotonicTime.measure { @condVar.wait sleepFor }
 
 	    sleepFor && sleptFor >= sleepFor
@@ -143,16 +144,20 @@ module FrugalTimeout
       ObjectSpace.define_finalizer self, proc { @thread.kill }
     end
 
-    def latestDelay
+    def calcDelay
       synchronize {
 	return unless @request
 
 	delay = @request.at - MonotonicTime.now
-	@request = nil
 	delay < 0 ? 0 : delay
       }
     end
-    private :latestDelay
+    private :calcDelay
+
+    def disposeOfRequest
+      @request = nil
+    end
+    private :disposeOfRequest
 
     def notify
       @condVar.signal
