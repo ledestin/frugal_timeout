@@ -254,6 +254,13 @@ describe FrugalTimeout::SleeperNotifier do
     (Time.now - start).round(1).should == 0.5
     @queue.should be_empty
   end
+
+  it 'can stop current request by sending nil' do
+    addRequest 0.5
+    @sleeper.expireAt nil
+    sleep 0.5
+    @queue.should be_empty
+  end
 end
 
 # {{{1 SortedQueue

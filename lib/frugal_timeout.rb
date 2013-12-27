@@ -142,7 +142,10 @@ module FrugalTimeout
 	loop {
 	  @onExpiry.call if synchronize {
 	    # Sleep forever until a request comes in.
-	    wait unless @expireAt
+	    unless @expireAt
+	      wait
+	      next
+	    end
 
 	    timeLeft = calcTimeLeft
 	    disposeOfRequest
