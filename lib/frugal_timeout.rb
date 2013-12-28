@@ -55,7 +55,7 @@ module FrugalTimeout
     include Comparable
     @@mutex = Mutex.new
 
-    attr_reader :at, :exception, :klass, :thread
+    attr_reader :at, :klass, :thread
 
     def initialize thread, at, klass
       @thread, @at, @klass = thread, at, klass
