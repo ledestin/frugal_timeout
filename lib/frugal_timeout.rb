@@ -107,9 +107,9 @@ module FrugalTimeout
 	r.enforceTimeout filter
       }
 
-      @requests.synchronize {
-	@onNewNearestRequest.call(@requests.first) unless @requests.empty?
-      }
+      if nearestRequest = @requests.first
+	@onNewNearestRequest.call nearestRequest
+      end
     end
 
     def queue sec, klass
