@@ -102,14 +102,15 @@ module FrugalTimeout
     # Purge and enforce expired timeouts. Only enforce once for each thread,
     # even if multiple timeouts for that thread expire at once.
     def purgeExpired
-      filter, now = {}, MonotonicTime.now
-      @requests.reject_and_get! { |r| r.at <= now }.each { |r|
-	r.enforceTimeout filter
+      expiredRequests, filter, now = nil, {}, MonotonicTime.now
+      @requests.synchronize {
+	expiredRequests = @requests.reject_and_get! { |r| r.at <= now }
+	# It's necessary to call onNewNearestRequest inside synchronize as other
+	# threads may #queue requests.
+	@onNewNearestRequest.call @requests.first unless @requests.empty?
       }
 
-      if nearestRequest = @requests.first
-	@onNewNearestRequest.call nearestRequest
-      end
+      expiredRequests.each { |r| r.enforceTimeout filter }
     end
 
     def queue sec, klass
