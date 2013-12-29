@@ -6,6 +6,7 @@ require 'frugal_timeout'
 
 FrugalTimeout.dropin!
 Thread.abort_on_exception = true
+MonotonicTime = FrugalTimeout::MonotonicTime
 
 SMALLEST_TIMEOUT = 0.0000001
 
@@ -23,10 +24,10 @@ end
 
 def new_timeout_request sec, res, resMutex
   begin
-    start = Time.now
+    start = MonotonicTime.now
     timeout(sec) { sleep }
   rescue FrugalTimeout::Error
-    resMutex.synchronize { res << Time.now - start }
+    resMutex.synchronize { res << MonotonicTime.now - start }
   end
 end
 
@@ -129,13 +130,13 @@ describe FrugalTimeout do
   end
 
   it 'finishes after N sec' do
-    start = Time.now
+    start = MonotonicTime.now
     expect { timeout(1) { sleep 2 } }.to raise_error FrugalTimeout::Error
-    (Time.now - start).round.should == 1
+    (MonotonicTime.now - start).round.should == 1
 
-    start = Time.now
+    start = MonotonicTime.now
     expect { timeout(1) { sleep 3 } }.to raise_error FrugalTimeout::Error
-    (Time.now - start).round.should == 1
+    (MonotonicTime.now - start).round.should == 1
   end
 
   it 'returns value from block' do
@@ -179,13 +180,13 @@ end
 # {{{1 MonotonicTime
 describe FrugalTimeout::MonotonicTime do
   it 'ticks properly' do
-    start = FrugalTimeout::MonotonicTime.now
+    start = MonotonicTime.now
     sleep 0.1
-    (FrugalTimeout::MonotonicTime.now - start).round(1).should == 0.1
+    (MonotonicTime.now - start).round(1).should == 0.1
   end
 
   it '#measure works' do
-    sleptFor = FrugalTimeout::MonotonicTime.measure { sleep 0.5 }
+    sleptFor = MonotonicTime.measure { sleep 0.5 }
     sleptFor.round(1).should == 0.5
   end
 end
@@ -194,7 +195,7 @@ end
 describe FrugalTimeout::Request do
   it '#defuse! and #defused? work' do
     req = FrugalTimeout::Request.new(Thread.current,
-      FrugalTimeout::MonotonicTime.now, FrugalTimeout::Error)
+      MonotonicTime.now, FrugalTimeout::Error)
     req.defused?.should == false
     req.defuse!
     req.defused?.should == true
@@ -230,18 +231,18 @@ describe FrugalTimeout::SleeperNotifier do
   end
 
   def addRequest sec
-    @sleeper.expireAt FrugalTimeout::MonotonicTime.now + sec
+    @sleeper.expireAt MonotonicTime.now + sec
   end
 
   it 'sends notification after delay passed' do
-    start = Time.now
+    start = MonotonicTime.now
     addRequest 0.5
     @queue.shift
-    (Time.now - start - 0.5).round(2).should <= 0.01
+    (MonotonicTime.now - start - 0.5).round(2).should <= 0.01
   end
 
   it 'handles negative delay' do
-    FrugalTimeout::MonotonicTime.measure {
+    MonotonicTime.measure {
       addRequest -1
       @queue.shift
     }.round(1).should == 0
@@ -249,9 +250,9 @@ describe FrugalTimeout::SleeperNotifier do
 
   it 'sends notification one time only for multiple requests' do
     5.times { addRequest 0.5 }
-    start = Time.now
+    start = MonotonicTime.now
     @queue.shift
-    (Time.now - start).round(1).should == 0.5
+    (MonotonicTime.now - start).round(1).should == 0.5
     @queue.should be_empty
   end
 
