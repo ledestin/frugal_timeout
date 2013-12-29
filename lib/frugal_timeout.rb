@@ -143,7 +143,7 @@ module FrugalTimeout
 
       @thread = Thread.new {
 	loop {
-	  @onExpiry.call if synchronize {
+	  synchronize { @onExpiry }.call if synchronize {
 	    # Sleep forever until a request comes in.
 	    unless @expireAt
 	      wait
@@ -162,7 +162,7 @@ module FrugalTimeout
     end
 
     def onExpiry &b
-      @onExpiry = b || DO_NOTHING
+      synchronize { @onExpiry = b || DO_NOTHING }
     end
 
     def expireAt time
