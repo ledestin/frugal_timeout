@@ -135,9 +135,11 @@ module FrugalTimeout
   class SleeperNotifier # :nodoc:
     include MonitorMixin
 
+    DO_NOTHING = proc {}
+
     def initialize
       super()
-      @condVar, @expireAt, @onExpiry = new_cond, nil, proc {}
+      @condVar, @expireAt, @onExpiry = new_cond, nil, DO_NOTHING
 
       @thread = Thread.new {
 	loop {
@@ -160,7 +162,7 @@ module FrugalTimeout
     end
 
     def onExpiry &b
-      @onExpiry = b
+      @onExpiry = b || DO_NOTHING
     end
 
     def expireAt time

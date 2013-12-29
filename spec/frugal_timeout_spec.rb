@@ -262,6 +262,13 @@ describe FrugalTimeout::SleeperNotifier do
     sleep 0.5
     @queue.should be_empty
   end
+
+  it 'can setup onExpiry again and not break' do
+    @sleeper.onExpiry
+    addRequest 0.01
+    # An exception here would be thrown in a different thread in case of a
+    # problem.
+  end
 end
 
 # {{{1 SortedQueue
