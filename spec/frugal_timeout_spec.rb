@@ -104,12 +104,6 @@ describe FrugalTimeout do
   end
 
   context 'recursive timeouts' do
-    it 'raises a single exception on same recursive timeouts' do
-      expect {
-	timeout(0.5) { timeout(0.5) { sleep } }
-      }.to raise_error FrugalTimeout::Error
-    end
-
     it 'works if recursive timeouts rescue thrown exception' do
       # A rescue block will only catch exception for the timeout() block it's
       # written for.
@@ -126,6 +120,31 @@ describe FrugalTimeout do
 	  end
 	}
       }.to raise_error Timeout::Error
+    end
+
+    context "doesn't raise second exception in the same thread" do
+      before :all do
+	FrugalTimeout.on_ensure { sleep 0.02 }
+      end
+
+      it 'when two requests expire close to each other' do
+	expect {
+	  timeout(0.02) {
+	    timeout(0.01, IOError) { sleep }
+	  }
+	}.to raise_error IOError
+      end
+
+      it "when second request doesn't have a chance to start" do
+	expect {
+	  timeout(0.01, IOError) {
+	    sleep
+	    timeout(1) { sleep }
+	  }
+	}.to raise_error IOError
+      end
+
+      FrugalTimeout.on_ensure
     end
   end
 

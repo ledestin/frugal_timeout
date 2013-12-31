@@ -2,7 +2,6 @@
 
 require 'hitimes'
 require 'monitor'
-require 'null_object'
 require 'thread'
 require 'timeout'
 
@@ -75,12 +74,9 @@ module FrugalTimeout
       @@mutex.synchronize { @defused }
     end
 
-    def enforceTimeout filter=NullObject.new {}
+    def enforceTimeout
       @@mutex.synchronize {
-	return if @defused || filter.has_key?(@thread)
-
-	filter[@thread] = true
-	@thread.raise @klass, 'execution expired'
+	@thread.raise @klass, 'execution expired' unless @defused
       }
     end
   end
@@ -95,6 +91,11 @@ module FrugalTimeout
       @onNewNearestRequest, @requests = proc {}, SortedQueue.new
     end
 
+    def defuse_thread! thread
+      @requests.each { |r| r.defuse! if r.thread == thread }
+    end
+    private :defuse_thread!
+
     def onNewNearestRequest &b
       @onNewNearestRequest = b
     end
@@ -104,13 +105,18 @@ module FrugalTimeout
     def purgeExpired
       expiredRequests, filter, now = nil, {}, MonotonicTime.now
       @requests.synchronize {
-	expiredRequests = @requests.reject_and_get! { |r| r.at <= now }
+	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
+	  next if filter[r.thread]
+
+	  r.enforceTimeout
+	  defuse_thread! r.thread
+	  filter[r.thread] = true
+	}
+
 	# It's necessary to call onNewNearestRequest inside synchronize as other
 	# threads may #queue requests.
 	@onNewNearestRequest.call @requests.first unless @requests.empty?
       }
-
-      expiredRequests.each { |r| r.enforceTimeout filter }
     end
 
     def queue sec, klass
@@ -203,6 +209,10 @@ module FrugalTimeout
       @array, @unsorted = storage, false
     end
 
+    def each &b
+      synchronize { @array.each &b }
+    end
+
     def empty?
       synchronize { @array.empty? }
     end
@@ -281,6 +291,10 @@ module FrugalTimeout
        end'
   end
 
+  def self.on_ensure &b # :nodoc:
+    @onEnsure = b
+  end
+
   # Same as Timeout.timeout()
   def self.timeout sec, klass=Error
     return yield sec if sec.nil? || sec <= 0
@@ -292,6 +306,7 @@ module FrugalTimeout
     rescue innerException => e
       raise klass, e.message, e.backtrace
     ensure
+      @onEnsure.call if @onEnsure
       request.defuse!
     end
   end
