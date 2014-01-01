@@ -6,7 +6,8 @@ Gem::Specification.new do |s|
   s.description = 'Timeout.timeout replacement that uses only 1 thread'
   s.authors     = ['Dmitry Maksyoma']
   s.email       = 'ledestin@gmail.com'
-  s.files       = ['lib/frugal_timeout.rb']
+  s.files       = `git ls-files`.split($\)
+  s.test_files = s.files.grep(%r{^(test|spec|features)/})
   s.require_paths = ['lib']
   s.homepage    = 'https://github.com/ledestin/frugal_timeout'
 
