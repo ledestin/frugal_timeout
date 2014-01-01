@@ -32,10 +32,11 @@ require 'timeout'
 # }}}1
 module FrugalTimeout
   # {{{1 Error
-  class Error < Timeout::Error; end # :nodoc:
+  class Error < Timeout::Error #:nodoc:
+  end
 
   # {{{1 MonotonicTime
-  class MonotonicTime # :nodoc:
+  class MonotonicTime #:nodoc:
     NANOS_IN_SECOND = 1_000_000_000
 
     def self.measure
@@ -50,7 +51,7 @@ module FrugalTimeout
   end
 
   # {{{1 Request
-  class Request # :nodoc:
+  class Request #:nodoc:
     include Comparable
     @@mutex = Mutex.new
 
@@ -82,7 +83,7 @@ module FrugalTimeout
   end
 
   # {{{1 RequestQueue
-  class RequestQueue # :nodoc:
+  class RequestQueue #:nodoc:
     extend Forwardable
 
     def_delegators :@requests, :empty?, :first, :<<
@@ -138,7 +139,7 @@ module FrugalTimeout
   # It's possible to set a new expiry time before the time set previously
   # expires. In this case, processing of the old request stops and the new
   # request processing starts.
-  class SleeperNotifier # :nodoc:
+  class SleeperNotifier #:nodoc:
     include MonitorMixin
 
     DO_NOTHING = proc {}
@@ -201,7 +202,7 @@ module FrugalTimeout
   end
 
   # {{{1 SortedQueue
-  class SortedQueue # :nodoc:
+  class SortedQueue #:nodoc:
     include MonitorMixin
 
     def initialize storage=[]
@@ -291,7 +292,7 @@ module FrugalTimeout
        end'
   end
 
-  def self.on_ensure &b # :nodoc:
+  def self.on_ensure &b #:nodoc:
     @onEnsure = b
   end
 
