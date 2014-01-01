@@ -1,4 +1,4 @@
-# Copyright (C) 2013 by Dmitry Maksyoma <ledestin@gmail.com>
+# Copyright (C) 2013, 2014 by Dmitry Maksyoma <ledestin@gmail.com>
 
 require 'hitimes'
 require 'monitor'
