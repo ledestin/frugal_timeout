@@ -13,6 +13,19 @@ As you may know, the stock Timeout.timeout uses thread per timeout call. If you
 use it a lot, you will soon be out of threads. This gem is to provide an
 alternative that uses only 1 thread.
 
+Also, there's a race condition in the 1.9-2.0 stock timeout. Consider the
+following code:
+```
+timeout(0.02) {
+  timeout(0.01, IOError) { sleep }
+}
+```
+
+In this case, the stock timeout will most likely rise IOError, but, given the
+race condition, sometimes it can also rise Timeout::Error. Just put `sleep 0.1'
+inside stock timeout ensure to trigger that. As of version 0.0.9, frugal_timeout
+will always rise IOError.
+
 ## Example
 
 ```
