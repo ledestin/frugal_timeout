@@ -115,10 +115,10 @@ module FrugalTimeout
     # Purge and enforce expired timeouts. Only enforce once for each thread,
     # even if multiple timeouts for that thread expire at once.
     def purgeExpired
-      filter, now = {}, MonotonicTime.now
       @requests.synchronize {
 	@onEnforce.call if @onEnforce
 
+	filter, now = {}, MonotonicTime.now
 	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
 	  next if filter[r.thread]
 
