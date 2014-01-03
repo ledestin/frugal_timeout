@@ -35,6 +35,19 @@ module FrugalTimeout
   class Error < Timeout::Error #:nodoc:
   end
 
+  # {{{1 Filter
+  class Filter #:nodoc:
+    def initialize
+      @store = {}
+    end
+
+    def run key
+      return if @store.has_key? key
+
+      @store[key] = true if yield
+    end
+  end
+
   # {{{1 MonotonicTime
   class MonotonicTime #:nodoc:
     NANOS_IN_SECOND = 1_000_000_000
@@ -118,14 +131,14 @@ module FrugalTimeout
       @requests.synchronize {
 	@onEnforce.call if @onEnforce
 
-	filter, now = {}, MonotonicTime.now
+	filter, now = Filter.new, MonotonicTime.now
 	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
-	  next if filter[r.thread]
-
-	  if r.enforceTimeout
-	    defuse_thread! r.thread
-	    filter[r.thread] = true
-	  end
+	  filter.run(r.thread) {
+	    if r.enforceTimeout
+	      defuse_thread! r.thread
+	      true
+	    end
+	  }
 	}
 
 	# It's necessary to call onNewNearestRequest inside synchronize as other

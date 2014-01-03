@@ -218,6 +218,33 @@ describe FrugalTimeout do
   end
 end
 
+# {{{1 Filter
+describe FrugalTimeout::Filter do
+  before :each do
+    @filter = FrugalTimeout::Filter.new
+    @block_ran = nil
+  end
+
+  it 'runs block for the first ever key' do
+    @filter.run(1) {
+      @block_ran = true
+    }
+    @block_ran.should == true
+  end
+
+  it "for same key, doesn't run block again, if block returned true" do
+    @filter.run(1) { true }
+    @filter.run(1) { @block_ran = true }
+    @block_ran.should == nil
+  end
+
+  it "for same key, runs run block again, if block returned false" do
+    @filter.run(1) { }
+    @filter.run(1) { @block_ran = true }
+    @block_ran.should === true
+  end
+end
+
 # {{{1 MonotonicTime
 describe FrugalTimeout::MonotonicTime do
   it 'ticks properly' do
