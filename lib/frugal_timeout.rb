@@ -239,10 +239,6 @@ module FrugalTimeout
       @array, @unsorted = storage, false
     end
 
-    def each &b
-      synchronize { @array.each &b }
-    end
-
     def empty?
       synchronize { @array.empty? }
     end
