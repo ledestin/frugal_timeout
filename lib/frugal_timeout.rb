@@ -31,6 +31,8 @@ require 'timeout'
 #--
 # }}}1
 module FrugalTimeout
+  DO_NOTHING = proc {}
+
   # {{{1 Error
   class Error < Timeout::Error #:nodoc:
   end
@@ -105,8 +107,8 @@ module FrugalTimeout
     def_delegators :@requests, :empty?, :first, :<<
 
     def initialize
-      @onNewNearestRequest, @requests, @threadReq =
-	proc {}, SortedQueue.new, {}
+      @onEnforce, @onNewNearestRequest, @requests, @threadReq =
+	DO_NOTHING, DO_NOTHING, SortedQueue.new, {}
     end
 
     def defuse_thread! thread
@@ -118,18 +120,18 @@ module FrugalTimeout
     private :defuse_thread!
 
     def onEnforce &b
-      @onEnforce = b
+      @onEnforce = b || DO_NOTHING
     end
 
     def onNewNearestRequest &b
-      @onNewNearestRequest = b
+      @onNewNearestRequest = b || DO_NOTHING
     end
 
     # Purge and enforce expired timeouts. Only enforce once for each thread,
     # even if multiple timeouts for that thread expire at once.
     def purgeExpired
       @requests.synchronize {
-	@onEnforce.call if @onEnforce
+	@onEnforce.call
 
 	filter, now = Filter.new, MonotonicTime.now
 	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
@@ -183,8 +185,6 @@ module FrugalTimeout
   # request processing starts.
   class SleeperNotifier #:nodoc:
     include MonitorMixin
-
-    DO_NOTHING = proc {}
 
     def initialize
       super()
