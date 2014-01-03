@@ -124,10 +124,10 @@ module FrugalTimeout
 	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
 	  defuse_thread!(r.thread) if r.enforceTimeout
 	}
-	@requests.reject_and_get! { |r| r.defused? }
 
 	# It's necessary to call onNewNearestRequest inside synchronize as other
 	# threads may #queue requests.
+	@requests.reject_and_get! { |r| r.defused? }
 	@onNewNearestRequest.call @requests.first unless @requests.empty?
       }
     end
