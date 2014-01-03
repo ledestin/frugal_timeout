@@ -92,11 +92,15 @@ module FrugalTimeout
     def_delegators :@requests, :empty?, :first, :<<
 
     def initialize
-      @onNewNearestRequest, @requests = proc {}, SortedQueue.new
+      @onNewNearestRequest, @requests, @threadReq =
+	proc {}, SortedQueue.new, {}
     end
 
     def defuse_thread! thread
-      @requests.each { |r| r.defuse! if r.thread == thread }
+      @requests.synchronize {
+	stored = @threadReq.delete thread
+	stored.each { |r| r.defuse! } if stored.is_a? Array
+      }
     end
     private :defuse_thread!
 
@@ -130,11 +134,26 @@ module FrugalTimeout
       }
     end
 
+    def storeInIndex request
+      unless stored = @threadReq[request.thread]
+	@threadReq[request.thread] = request
+	return
+      end
+
+      if stored.is_a? Array
+	stored << request
+      else
+	@threadReq[request.thread] = [stored, request]
+      end
+    end
+    private :storeInIndex
+
     def queue sec, klass
       @requests.synchronize {
 	@requests << (request = Request.new(Thread.current,
 	  MonotonicTime.now + sec, klass))
 	@onNewNearestRequest.call(request) if @requests.first == request
+	storeInIndex request
 	request
       }
     end
