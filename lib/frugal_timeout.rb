@@ -152,8 +152,8 @@ module FrugalTimeout
       @requests.synchronize {
 	@requests << (request = Request.new(Thread.current,
 	  MonotonicTime.now + sec, klass))
-	@onNewNearestRequest.call(request) if @requests.first == request
 	storeInIndex request
+	@onNewNearestRequest.call(request) if @requests.first == request
 	request
       }
     end
