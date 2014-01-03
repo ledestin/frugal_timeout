@@ -316,7 +316,7 @@ module FrugalTimeout
   # Ensure that calling timeout() will use FrugalTimeout.timeout()
   def self.dropin!
     Object.class_eval \
-      'def timeout t, klass=Error, &b
+      'def timeout t, klass=nil, &b
 	 FrugalTimeout.timeout t, klass, &b
        end'
   end
@@ -330,15 +330,17 @@ module FrugalTimeout
   end
 
   # Same as Timeout.timeout()
-  def self.timeout sec, klass=Error
+  def self.timeout sec, klass=nil
     return yield sec if sec.nil? || sec <= 0
 
-    innerException = Class.new Timeout::ExitException
+    innerException = klass || Class.new(Timeout::ExitException)
     request = @requestQueue.queue(sec, innerException)
     begin
       yield sec
     rescue innerException => e
-      raise klass, e.message, e.backtrace
+      raise if klass
+
+      raise Error, e.message, e.backtrace
     ensure
       @onEnsure.call if @onEnsure
       request.defuse!

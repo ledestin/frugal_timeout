@@ -183,6 +183,17 @@ describe FrugalTimeout do
     expect { timeout(0.1, IOError) { sleep } }.to raise_error IOError
   end
 
+  it 'raises specified exception inside the block' do
+    expect {
+      timeout(0.01, IOError) {
+	begin
+	  sleep
+	rescue IOError
+	end
+      }
+    }.not_to raise_error
+  end
+
   it "doesn't raise exception if there's no need" do
     timeout(1) { }
     sleep 2
