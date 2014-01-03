@@ -37,19 +37,6 @@ module FrugalTimeout
   class Error < Timeout::Error #:nodoc:
   end
 
-  # {{{1 Filter
-  class Filter #:nodoc:
-    def initialize
-      @store = {}
-    end
-
-    def run key
-      return if @store.has_key? key
-
-      @store[key] = true if yield
-    end
-  end
-
   # {{{1 MonotonicTime
   class MonotonicTime #:nodoc:
     NANOS_IN_SECOND = 1_000_000_000
