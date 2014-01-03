@@ -216,6 +216,13 @@ describe FrugalTimeout do
     expect { timeout(SMALLEST_TIMEOUT) { sleep } }.to \
       raise_error Timeout::Error
   end
+
+  it "doesn't enforce defused timeout" do
+    expect {
+      timeout(0.1) { }
+      sleep 0.2
+    }.not_to raise_error
+  end
 end
 
 # {{{1 Filter
