@@ -77,7 +77,10 @@ module FrugalTimeout
 
     def enforceTimeout
       @@mutex.synchronize {
-	@thread.raise @klass, 'execution expired' unless @defused
+	return if @defused
+
+	@thread.raise @klass, 'execution expired'
+	true
       }
     end
   end
@@ -97,6 +100,10 @@ module FrugalTimeout
     end
     private :defuse_thread!
 
+    def onEnforce &b
+      @onEnforce = b
+    end
+
     def onNewNearestRequest &b
       @onNewNearestRequest = b
     end
@@ -106,12 +113,15 @@ module FrugalTimeout
     def purgeExpired
       expiredRequests, filter, now = nil, {}, MonotonicTime.now
       @requests.synchronize {
+	@onEnforce.call if @onEnforce
+
 	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
 	  next if filter[r.thread]
 
-	  r.enforceTimeout
-	  defuse_thread! r.thread
-	  filter[r.thread] = true
+	  if r.enforceTimeout
+	    defuse_thread! r.thread
+	    filter[r.thread] = true
+	  end
 	}
 
 	# It's necessary to call onNewNearestRequest inside synchronize as other
@@ -290,6 +300,10 @@ module FrugalTimeout
       'def timeout t, klass=Error, &b
 	 FrugalTimeout.timeout t, klass, &b
        end'
+  end
+
+  def self.on_enforce &b #:nodoc:
+    @requestQueue.onEnforce &b
   end
 
   def self.on_ensure &b #:nodoc:

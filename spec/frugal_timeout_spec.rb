@@ -122,6 +122,17 @@ describe FrugalTimeout do
       }.to raise_error Timeout::Error
     end
 
+    it 'raises exception if inner timeout is defused before it is enforced' do
+      expect {
+	timeout(0.05, IOError) {
+	  FrugalTimeout.on_enforce { sleep 0.02 }
+	  timeout(0.01) { }
+	  FrugalTimeout.on_enforce
+	  sleep 0.06
+	}
+      }.to raise_error IOError
+    end
+
     context "doesn't raise second exception in the same thread" do
       before :all do
 	FrugalTimeout.on_ensure { sleep 0.02 }
