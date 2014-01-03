@@ -133,14 +133,9 @@ module FrugalTimeout
       @requests.synchronize {
 	@onEnforce.call
 
-	filter, now = Filter.new, MonotonicTime.now
+	now = MonotonicTime.now
 	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
-	  filter.run(r.thread) {
-	    if r.enforceTimeout
-	      defuse_thread! r.thread
-	      true
-	    end
-	  }
+	  defuse_thread!(r.thread) if r.enforceTimeout
 	}
 	@requests.reject_and_get! { |r| r.defused? }
 
