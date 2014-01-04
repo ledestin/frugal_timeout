@@ -132,7 +132,9 @@ module FrugalTimeout
 
 	# It's necessary to call onNewNearestRequest inside synchronize as other
 	# threads may #queue requests.
-	@requests.reject_and_get! { |r| r.defused? }
+	@requests.reject_and_get! { |r| r.defused? }.each { |r|
+	  removeFromIndex r
+	}
 	@onNewNearestRequest.call @requests.first unless @requests.empty?
       }
     end
