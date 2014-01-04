@@ -94,13 +94,13 @@ module FrugalTimeout
     def_delegators :@requests, :empty?, :first, :<<
 
     def initialize
-      @onEnforce, @onNewNearestRequest, @requests, @threadReq =
-	DO_NOTHING, DO_NOTHING, SortedQueue.new, {}
+      @onEnforce, @onNewNearestRequest, @requests, @threadIdx =
+	DO_NOTHING, DO_NOTHING, SortedQueue.new, Storage.new
     end
 
     def defuse_thread! thread
       @requests.synchronize {
-	stored = @threadReq[thread]
+	stored = @threadIdx[thread]
 	stored.each { |r| r.defuse! } if stored.is_a? Array
       }
     end
@@ -122,43 +122,30 @@ module FrugalTimeout
 	now = MonotonicTime.now
 	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
 	  unless r.enforceTimeout
-	    removeFromIndex r
+	    removeFromIndex r.thread, r
 	    next
 	  end
 
 	  defuse_thread! r.thread
-	  removeFromIndex r, true
+	  removeFromIndex r.thread
 	}
 
 	# It's necessary to call onNewNearestRequest inside synchronize as other
 	# threads may #queue requests.
 	@requests.reject_and_get! { |r| r.defused? }.each { |r|
-	  removeFromIndex r
+	  removeFromIndex r.thread, r
 	}
 	@onNewNearestRequest.call @requests.first unless @requests.empty?
       }
     end
 
-    def removeFromIndex request, remove_all=false
-      return @threadReq.delete(request.thread) if remove_all
-
-      return unless reqs = @threadReq[request.thread]
-      return reqs.delete(request) if reqs.is_a? Array
-
-      @threadReq.delete request.thread
+    def removeFromIndex key, val=nil
+      @threadIdx.delete key, val
     end
+    private :removeFromIndex
 
-    def storeInIndex request
-      unless stored = @threadReq[request.thread]
-	@threadReq[request.thread] = request
-	return
-      end
-
-      if stored.is_a? Array
-	stored << request
-      else
-	@threadReq[request.thread] = [stored, request]
-      end
+    def storeInIndex key, val
+      @threadIdx.set key, val
     end
     private :storeInIndex
 
@@ -166,7 +153,7 @@ module FrugalTimeout
       @requests.synchronize {
 	@requests << (request = Request.new(Thread.current,
 	  MonotonicTime.now + sec, klass))
-	storeInIndex request
+	storeInIndex request.thread, request
 	@onNewNearestRequest.call(request) if @requests.first == request
 	request
       }
@@ -308,6 +295,43 @@ module FrugalTimeout
 
       @array.sort!
       @unsorted = false
+    end
+  end
+
+  # {{{1 Storage
+  class Storage
+    def initialize
+      @storage = {}
+    end
+
+    def delete key, val=nil
+      return unless stored = @storage[key]
+
+      if val.nil? || stored == val
+	@storage.delete key
+	return
+      end
+
+      stored.delete val
+      @storage[key] = stored.first if stored.size == 1
+    end
+
+    def get key
+      @storage[key]
+    end
+    alias :[] :get
+
+    def set key, val
+      unless stored = @storage[key]
+	@storage[key] = val
+	return
+      end
+
+      if stored.is_a? Array
+	stored << val
+      else
+	@storage[key] = [stored, val]
+      end
     end
   end
 
