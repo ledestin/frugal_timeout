@@ -96,6 +96,9 @@ module FrugalTimeout
     def initialize
       @onEnforce, @onNewNearestRequest, @requests, @threadIdx =
 	DO_NOTHING, DO_NOTHING, SortedQueue.new, Storage.new
+
+      @requests.onAdd { |r| storeInIndex r.thread, r }
+      @requests.onRemove { |r| removeFromIndex r.thread, r }
     end
 
     def defuse_thread! thread
@@ -121,20 +124,12 @@ module FrugalTimeout
 
 	now = MonotonicTime.now
 	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
-	  unless r.enforceTimeout
-	    removeFromIndex r.thread, r
-	    next
-	  end
-
-	  defuse_thread! r.thread
-	  removeFromIndex r.thread
+	  r.enforceTimeout && defuse_thread!(r.thread)
 	}
 
 	# It's necessary to call onNewNearestRequest inside synchronize as other
 	# threads may #queue requests.
-	@requests.reject_and_get! { |r| r.defused? }.each { |r|
-	  removeFromIndex r.thread, r
-	}
+	@requests.reject_and_get! { |r| r.defused? }
 	@onNewNearestRequest.call @requests.first unless @requests.empty?
       }
     end
@@ -236,6 +231,7 @@ module FrugalTimeout
     def initialize storage=[]
       super()
       @array, @unsorted = storage, false
+      @onAdd = @onRemove = DO_NOTHING
     end
 
     def empty?
@@ -253,6 +249,14 @@ module FrugalTimeout
       }
     end
 
+    def onAdd &b
+      @onAdd = b || DO_NOTHING
+    end
+
+    def onRemove &b
+      @onRemove = b || DO_NOTHING
+    end
+
     def push *args
       synchronize {
 	args.each { |arg|
@@ -265,14 +269,19 @@ module FrugalTimeout
 	}
 	@unsorted = true
       }
+      args.each { |arg| @onAdd.call arg }
     end
     alias :<< :push
 
     def reject! &b
+      ar = []
       synchronize {
 	sort!
-	@array.reject! &b
+	@array.reject! { |el|
+	  ar << el if b.call el
+	}
       }
+      ar.each { |el| @onRemove.call el }
     end
 
     def reject_and_get! &b
