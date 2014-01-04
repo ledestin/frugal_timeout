@@ -100,7 +100,7 @@ module FrugalTimeout
 
     def defuse_thread! thread
       @requests.synchronize {
-	stored = @threadReq.delete thread
+	stored = @threadReq[thread]
 	stored.each { |r| r.defuse! } if stored.is_a? Array
       }
     end
@@ -114,15 +114,20 @@ module FrugalTimeout
       @onNewNearestRequest = b || DO_NOTHING
     end
 
-    # Purge and enforce expired timeouts. Only enforce once for each thread,
-    # even if multiple timeouts for that thread expire at once.
+    # Purge and enforce expired timeouts.
     def purgeExpired
       @requests.synchronize {
 	@onEnforce.call
 
 	now = MonotonicTime.now
 	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
-	  defuse_thread!(r.thread) if r.enforceTimeout
+	  unless r.enforceTimeout
+	    removeFromIndex r
+	    next
+	  end
+
+	  defuse_thread! r.thread
+	  removeFromIndex r, true
 	}
 
 	# It's necessary to call onNewNearestRequest inside synchronize as other
@@ -130,6 +135,15 @@ module FrugalTimeout
 	@requests.reject_and_get! { |r| r.defused? }
 	@onNewNearestRequest.call @requests.first unless @requests.empty?
       }
+    end
+
+    def removeFromIndex request, remove_all=false
+      return @threadReq.delete(request.thread) if remove_all
+
+      return unless reqs = @threadReq[request.thread]
+      return reqs.delete(request) if reqs.is_a? Array
+
+      @threadReq.delete request.thread
     end
 
     def storeInIndex request
