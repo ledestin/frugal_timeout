@@ -94,11 +94,11 @@ module FrugalTimeout
     def_delegators :@requests, :empty?, :first, :<<
 
     def initialize
-      @onEnforce, @onNewNearestRequest, @requests, @threadIdx =
-	DO_NOTHING, DO_NOTHING, SortedQueue.new, Storage.new
+      @onEnforce, @onNewNearestRequest = DO_NOTHING, DO_NOTHING
+      @requests, @threadIdx = SortedQueue.new, Storage.new
 
-      @requests.onAdd { |r| storeInIndex r.thread, r }
-      @requests.onRemove { |r| removeFromIndex r.thread, r }
+      @requests.onAdd { |r| @threadIdx.set r.thread, r }
+      @requests.onRemove { |r| @threadIdx.delete r.thread, r }
     end
 
     def defuse_thread! thread
@@ -133,16 +133,6 @@ module FrugalTimeout
 	@onNewNearestRequest.call @requests.first unless @requests.empty?
       }
     end
-
-    def removeFromIndex key, val=nil
-      @threadIdx.delete key, val
-    end
-    private :removeFromIndex
-
-    def storeInIndex key, val
-      @threadIdx.set key, val
-    end
-    private :storeInIndex
 
     def queue sec, klass
       @requests.synchronize {
