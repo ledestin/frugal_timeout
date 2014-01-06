@@ -100,10 +100,7 @@ module FrugalTimeout
 
   # {{{1 RequestQueue
   class RequestQueue #:nodoc:
-    extend FrugalTimeout::SyncedForwardable
     include MonitorMixin
-
-    def_delegators_synced :@requests, :empty?, :first, :<<
 
     def initialize
       super
