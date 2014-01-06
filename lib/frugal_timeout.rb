@@ -87,17 +87,6 @@ module FrugalTimeout
     end
   end
 
-  # {{{1 SyncedForwardable
-  module SyncedForwardable
-    def def_delegators_synced accessor, *methods
-      methods.each { |method|
-	define_method(method) {
-	  synchronize { instance_variable_get(accessor).send method }
-	}
-      }
-    end
-  end
-
   # {{{1 RequestQueue
   class RequestQueue #:nodoc:
     include MonitorMixin

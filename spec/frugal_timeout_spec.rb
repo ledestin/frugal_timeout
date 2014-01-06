@@ -450,25 +450,3 @@ describe FrugalTimeout::Storage do
     end
   end
 end
-
-# {{{1 SyncedForwardable
-describe FrugalTimeout::SyncedForwardable do
-  it 'synchronizes forwarded method' do
-    class Foo
-      extend FrugalTimeout::SyncedForwardable
-      include MonitorMixin
-
-      def_delegators_synced :@ar, :size
-
-      attr_reader :called
-
-      def initialize
-	super
-	@ar, @called = [], false
-      end
-    end
-
-    foo = Foo.new
-    foo.size
-  end
-end
