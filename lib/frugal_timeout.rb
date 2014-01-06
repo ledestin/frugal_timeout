@@ -87,13 +87,26 @@ module FrugalTimeout
     end
   end
 
+  # {{{1 SyncedForwardable
+  module SyncedForwardable
+    def def_delegators_synced accessor, *methods
+      methods.each { |method|
+	define_method(method) {
+	  synchronize { instance_variable_get(accessor).send method }
+	}
+      }
+    end
+  end
+
   # {{{1 RequestQueue
   class RequestQueue #:nodoc:
-    extend Forwardable
+    extend FrugalTimeout::SyncedForwardable
+    include MonitorMixin
 
-    def_delegators :@requests, :empty?, :first, :<<
+    def_delegators_synced :@requests, :empty?, :first, :<<
 
     def initialize
+      super
       @onEnforce, @onNewNearestRequest = DO_NOTHING, DO_NOTHING
       @requests, @threadIdx = SortedQueue.new, Storage.new
 
@@ -102,24 +115,22 @@ module FrugalTimeout
     end
 
     def defuse_thread! thread
-      @requests.synchronize {
-	stored = @threadIdx[thread]
-	stored.each { |r| r.defuse! } if stored.is_a? Array
-      }
+      stored = @threadIdx[thread]
+      stored.each { |r| r.defuse! } if stored.is_a? Array
     end
     private :defuse_thread!
 
     def onEnforce &b
-      @onEnforce = b || DO_NOTHING
+      synchronize { @onEnforce = b || DO_NOTHING }
     end
 
     def onNewNearestRequest &b
-      @onNewNearestRequest = b || DO_NOTHING
+      synchronize { @onNewNearestRequest = b || DO_NOTHING }
     end
 
     # Purge and enforce expired timeouts.
     def purgeExpired
-      @requests.synchronize {
+      synchronize {
 	@onEnforce.call
 
 	now = MonotonicTime.now
@@ -135,7 +146,7 @@ module FrugalTimeout
     end
 
     def queue sec, klass
-      @requests.synchronize {
+      synchronize {
 	@requests << (request = Request.new(Thread.current,
 	  MonotonicTime.now + sec, klass))
 	@onNewNearestRequest.call(request) if @requests.first == request
@@ -215,7 +226,9 @@ module FrugalTimeout
 
   # {{{1 SortedQueue
   class SortedQueue #:nodoc:
-    include MonitorMixin
+    extend Forwardable
+
+    def_delegators :@array, :empty?, :first, :size
 
     def initialize storage=[]
       super()
@@ -223,19 +236,9 @@ module FrugalTimeout
       @onAdd = @onRemove = DO_NOTHING
     end
 
-    def empty?
-      synchronize { @array.empty? }
-    end
-
-    def first
-      synchronize { @array.first }
-    end
-
     def last
-      synchronize {
-	sort!
-	@array.last
-      }
+      sort!
+      @array.last
     end
 
     def onAdd &b
@@ -247,28 +250,24 @@ module FrugalTimeout
     end
 
     def push *args
-      synchronize {
-	args.each { |arg|
-	  case @array.first <=> arg
-	  when -1, 0, nil
-	    @array.push arg
-	  when 1
-	    @array.unshift arg
-	  end
-	}
-	@unsorted = true
+      args.each { |arg|
+	case @array.first <=> arg
+	when -1, 0, nil
+	  @array.push arg
+	when 1
+	  @array.unshift arg
+	end
       }
+      @unsorted = true
       args.each { |arg| @onAdd.call arg }
     end
     alias :<< :push
 
     def reject! &b
       ar = []
-      synchronize {
-	sort!
-	@array.reject! { |el|
-	  ar << el if b.call el
-	}
+      sort!
+      @array.reject! { |el|
+	ar << el if b.call el
       }
       ar.each { |el| @onRemove.call el }
     end
@@ -281,10 +280,6 @@ module FrugalTimeout
 	res << el
       }
       res
-    end
-
-    def size
-      synchronize { @array.size }
     end
 
     private
