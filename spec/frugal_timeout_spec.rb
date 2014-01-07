@@ -23,12 +23,10 @@ def multiple_timeouts growing, cnt
 end
 
 def new_timeout_request sec, res, resMutex
-  begin
-    start = MonotonicTime.now
-    timeout(sec) { sleep }
-  rescue FrugalTimeout::Error
-    resMutex.synchronize { res << MonotonicTime.now - start }
-  end
+  start = MonotonicTime.now
+  timeout(sec) { sleep }
+rescue FrugalTimeout::Error
+  resMutex.synchronize { res << MonotonicTime.now - start }
 end
 
 def new_timeout_request_thread sec, res, resMutex
