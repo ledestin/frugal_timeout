@@ -290,6 +290,18 @@ describe FrugalTimeout::RequestQueue do
       called.should == true
     end
 
+    it 'defuses all requests for the thread' do
+      reqs = []
+      reqs << @requests.queue(10, FrugalTimeout::Error)
+      reqs << @requests.queue(0, FrugalTimeout::Error)
+      expect {
+	Thread.new {
+	  @requests.handleExpiry
+	}.join
+      }.to raise_error FrugalTimeout::Error
+      reqs.find { |r| !r.defused? }.should == nil
+    end
+
     context 'onNewNearestRequest' do
       it 'invokes onNewNearestRequest' do
 	@requests.queue(0, FrugalTimeout::Error)
