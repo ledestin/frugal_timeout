@@ -1,0 +1,30 @@
+#!/usr/bin/ruby
+
+require './lib/frugal_timeout'
+
+Thread.abort_on_exception = true
+FrugalTimeout.dropin!
+
+def recursive_timeout n
+  start = FrugalTimeout::MonotonicTime.now
+  timeout(1) {
+    if n > 1
+      recursive_timeout n -= 1
+    else
+      sleep
+    end
+  }
+rescue FrugalTimeout::Error
+  @m.synchronize { @ar << FrugalTimeout::MonotonicTime.now - start }
+end
+
+THREAD_COUNT, TIMES = 150, 100
+@ar, @m = [], Mutex.new
+THREAD_COUNT.times {
+  Thread.new {
+    recursive_timeout TIMES
+  }
+}
+sleep 0.1 until @m.synchronize { @ar.size == THREAD_COUNT }
+
+puts "#{THREAD_COUNT*TIMES} calls\navg: #{@ar.inject(:+)/@ar.size}"
