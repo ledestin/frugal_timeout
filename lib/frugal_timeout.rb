@@ -139,9 +139,10 @@ module FrugalTimeout
     def purgeAndEnforceExpired
       @onEnforce.call
       now = MonotonicTime.now
-      @requests.reject_until_mismatch! { |r| r.at <= now }.each { |r|
+      while !@requests.empty? && @requests.first.at <= now
+	r = @requests.shift
 	r.enforceTimeout && defuse_thread!(r.thread)
-      }
+      end
     end
 
     def sendNearestActiveRequest
@@ -223,7 +224,7 @@ module FrugalTimeout
   class SortedQueue #:nodoc:
     extend Forwardable
 
-    def_delegators :@array, :empty?, :first, :size
+    def_delegators :@array, :empty?, :first, :shift, :size
 
     def initialize storage=[]
       super()

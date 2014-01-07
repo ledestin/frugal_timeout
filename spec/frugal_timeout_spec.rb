@@ -102,6 +102,14 @@ describe FrugalTimeout do
   end
 
   context 'recursive timeouts' do
+    it 'with the same delay' do
+      expect {
+	timeout(SMALLEST_TIMEOUT) {
+	  timeout(SMALLEST_TIMEOUT) { sleep }
+	}
+      }.to raise_error FrugalTimeout::Error
+    end
+
     it 'works if recursive timeouts rescue thrown exception' do
       # A rescue block will only catch exception for the timeout() block it's
       # written for.
