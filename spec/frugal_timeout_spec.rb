@@ -260,7 +260,7 @@ describe FrugalTimeout::RequestQueue do
     }
   end
 
-  context 'always invokes callback after purging' do
+  context 'invokes onNewNearestRequest callback after queuing' do
     [[10, "didn't expire yet"], [0, 'expired']].each { |sec, msg|
       it "when request #{msg}" do
 	req = @requests.queue(sec, FrugalTimeout::Error)
