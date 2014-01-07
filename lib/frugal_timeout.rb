@@ -120,11 +120,11 @@ module FrugalTimeout
 	@onEnforce.call
 
 	now = MonotonicTime.now
-	@requests.reject_and_get! { |r| r.at <= now }.each { |r|
+	@requests.reject_until_mismatch! { |r| r.at <= now }.each { |r|
 	  r.enforceTimeout && defuse_thread!(r.thread)
 	}
 
-	@requests.reject_and_get! { |r| r.defused? }
+	@requests.reject_until_mismatch! { |r| r.defused? }
 	# It's necessary to call onNewNearestRequest inside synchronize as other
 	# threads may #queue requests.
 	@onNewNearestRequest.call @requests.first unless @requests.empty?
@@ -258,7 +258,7 @@ module FrugalTimeout
       ar.each { |el| @onRemove.call el }
     end
 
-    def reject_and_get! &b
+    def reject_until_mismatch! &b
       res = []
       reject! { |el|
 	break unless b.call el

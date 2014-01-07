@@ -368,10 +368,10 @@ describe FrugalTimeout::SortedQueue do
     }.not_to raise_error
   end
 
-  it '#reject_and_get!' do
+  it '#reject_until_mismatch!' do
     @queue.push 'a'
     @queue.push 'b'
-    res = @queue.reject_and_get! { |el| el < 'b' }
+    res = @queue.reject_until_mismatch! { |el| el < 'b' }
     res.size.should == 1
     res.first.should == 'a'
   end
