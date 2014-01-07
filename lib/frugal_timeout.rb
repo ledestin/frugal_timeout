@@ -131,8 +131,13 @@ module FrugalTimeout
     private
 
     def defuse_thread! thread
-      stored = @threadIdx[thread]
-      stored.each { |r| r.defuse! } if stored.is_a? Array
+      return unless stored = @threadIdx[thread]
+
+      if stored.is_a? Array
+	stored.each { |r| r.defuse! }
+      else
+	stored.defuse!
+      end
     end
 
     # Purge and enforce expired timeouts.
@@ -224,7 +229,7 @@ module FrugalTimeout
   class SortedQueue #:nodoc:
     extend Forwardable
 
-    def_delegators :@array, :empty?, :first, :shift, :size
+    def_delegators :@array, :empty?, :first, :size
 
     def initialize storage=[]
       super()
@@ -275,6 +280,13 @@ module FrugalTimeout
 
 	res << el
       }
+      res
+    end
+
+    def shift
+      sort!
+      res = @array.shift
+      @onRemove.call res
       res
     end
 

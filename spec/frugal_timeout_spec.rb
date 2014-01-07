@@ -297,15 +297,14 @@ describe FrugalTimeout::RequestQueue do
     end
 
     it 'defuses all requests for the thread' do
-      reqs = []
-      reqs << @requests.queue(10, FrugalTimeout::Error)
-      reqs << @requests.queue(0, FrugalTimeout::Error)
+      req = @requests.queue(10, FrugalTimeout::Error)
+      @requests.queue(0, FrugalTimeout::Error)
       expect {
 	Thread.new {
 	  @requests.handleExpiry
 	}.join
       }.to raise_error FrugalTimeout::Error
-      reqs.find { |r| !r.defused? }.should == nil
+      req.defused?.should == true
     end
 
     context 'onNewNearestRequest' do
@@ -441,6 +440,14 @@ describe FrugalTimeout::SortedQueue do
     res = @queue.reject_until_mismatch! { |el| el < 'b' }
     res.size.should == 1
     res.first.should == 'a'
+  end
+
+  it '#shift calls onRemove' do
+    called = nil
+    @queue.onRemove { |el| called = el }
+    @queue.push 'a'
+    @queue.shift
+    called.should == 'a'
   end
 
   it 'calls onAdd callback' do
