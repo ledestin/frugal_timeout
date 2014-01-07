@@ -125,8 +125,6 @@ module FrugalTimeout
 	}
 
 	@requests.reject_until_mismatch! { |r| r.defused? }
-	# It's necessary to call onNewNearestRequest inside synchronize as other
-	# threads may #queue requests.
 	@onNewNearestRequest.call @requests.first unless @requests.empty?
       }
     end
