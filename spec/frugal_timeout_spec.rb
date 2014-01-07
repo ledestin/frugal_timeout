@@ -268,6 +268,14 @@ describe FrugalTimeout::RequestQueue do
       end
     }
   end
+
+  it 'invokes onEnforce on handleExpiry' do
+    called = false
+    @requests.onEnforce { called = true }
+    @requests.queue(0, FrugalTimeout::Error)
+    expect { @requests.handleExpiry }.to raise_error
+    called.should == true
+  end
 end
 
 # {{{1 SleeperNotifier
