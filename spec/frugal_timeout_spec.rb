@@ -260,13 +260,25 @@ describe FrugalTimeout::RequestQueue do
     }
   end
 
-  context 'invokes onNewNearestRequest callback after queuing' do
-    [[10, "didn't expire yet"], [0, 'expired']].each { |sec, msg|
-      it "when request #{msg}" do
-	req = @requests.queue(sec, FrugalTimeout::Error)
+  context 'after queueing' do
+    context 'invokes onNewNearestRequest callback' do
+      it 'just once' do
+	@requests.queue(10, FrugalTimeout::Error)
 	@ar.size.should == 1
       end
-    }
+
+      it 'when next request is nearer than prev' do
+	@requests.queue(10, FrugalTimeout::Error)
+	@requests.queue(0, FrugalTimeout::Error)
+	@ar.size.should == 2
+      end
+    end
+
+    it "doesn't invoke onNewNearestRequest if request isn't nearest" do
+      @requests.queue(10, FrugalTimeout::Error)
+      @requests.queue(20, FrugalTimeout::Error)
+      @ar.size.should == 1
+    end
   end
 
   it 'invokes onEnforce on handleExpiry' do
