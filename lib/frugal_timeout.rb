@@ -115,6 +115,10 @@ module FrugalTimeout
       synchronize { @onNewNearestRequest = b || DO_NOTHING }
     end
 
+    def size
+      synchronize { @requests.size }
+    end
+
     def queue sec, klass
       synchronize {
 	@requests << (request = Request.new(Thread.current,
