@@ -1,3 +1,4 @@
+# * Add more comments.
 # * Add docs like in null_object gem.
 
 require 'frugal_timeout'
