@@ -100,11 +100,12 @@ module FrugalTimeout
       @requests.onRemove { |r| @threadIdx.delete r.thread, r }
     end
 
-    def defuse_thread! thread
-      stored = @threadIdx[thread]
-      stored.each { |r| r.defuse! } if stored.is_a? Array
+    def handleExpiry
+      synchronize {
+	purgeAndEnforceExpired
+	sendNearestActiveRequest
+      }
     end
-    private :defuse_thread!
 
     def onEnforce &b
       synchronize { @onEnforce = b || DO_NOTHING }
@@ -114,21 +115,6 @@ module FrugalTimeout
       synchronize { @onNewNearestRequest = b || DO_NOTHING }
     end
 
-    # Purge and enforce expired timeouts.
-    def purgeExpired
-      synchronize {
-	@onEnforce.call
-
-	now = MonotonicTime.now
-	@requests.reject_until_mismatch! { |r| r.at <= now }.each { |r|
-	  r.enforceTimeout && defuse_thread!(r.thread)
-	}
-
-	@requests.reject_until_mismatch! { |r| r.defused? }
-	@onNewNearestRequest.call @requests.first unless @requests.empty?
-      }
-    end
-
     def queue sec, klass
       synchronize {
 	@requests << (request = Request.new(Thread.current,
@@ -136,6 +122,27 @@ module FrugalTimeout
 	@onNewNearestRequest.call(request) if @requests.first == request
 	request
       }
+    end
+
+    private
+
+    def defuse_thread! thread
+      stored = @threadIdx[thread]
+      stored.each { |r| r.defuse! } if stored.is_a? Array
+    end
+
+    # Purge and enforce expired timeouts.
+    def purgeAndEnforceExpired
+      @onEnforce.call
+      now = MonotonicTime.now
+      @requests.reject_until_mismatch! { |r| r.at <= now }.each { |r|
+	r.enforceTimeout && defuse_thread!(r.thread)
+      }
+    end
+
+    def sendNearestActiveRequest
+      @requests.reject_until_mismatch! { |r| r.defused? }
+      @onNewNearestRequest.call @requests.first unless @requests.empty?
     end
   end
 
@@ -318,7 +325,7 @@ module FrugalTimeout
   @requestQueue.onNewNearestRequest { |request|
     sleeper.expireAt request.at
   }
-  sleeper.onExpiry { @requestQueue.purgeExpired }
+  sleeper.onExpiry { @requestQueue.handleExpiry }
 
   # {{{2 Methods
 
