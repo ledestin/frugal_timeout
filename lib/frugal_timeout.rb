@@ -144,10 +144,12 @@ module FrugalTimeout
     def purgeAndEnforceExpired
       @onEnforce.call
       now = MonotonicTime.now
-      while !@requests.empty? && @requests.first.at <= now
-	r = @requests.shift
-	r.enforceTimeout && defuse_thread!(r.thread)
-      end
+      @requests.reject_until_mismatch! { |r|
+	if @requests.first.at <= now
+	  r.enforceTimeout && defuse_thread!(r.thread)
+	  true
+	end
+      }
     end
 
     def sendNearestActiveRequest
