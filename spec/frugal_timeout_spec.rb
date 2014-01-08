@@ -11,6 +11,12 @@ MonotonicTime = FrugalTimeout::MonotonicTime
 SMALLEST_TIMEOUT = 0.0000001
 
 # {{{1 Helper methods
+class Array
+  def avg
+    inject(:+)/size
+  end
+end
+
 def multiple_timeouts growing, cnt
   res, resMutex = [], Mutex.new
   if growing
@@ -98,7 +104,7 @@ describe FrugalTimeout do
     res, resMutex = [], Mutex.new
     (cnt = 5).times { new_timeout_request_thread 1, res, resMutex }
     sleep 1 until res.size == cnt
-    res.each { |sec| (sec - 1).should < 0.01 }
+    (res.avg - 1).should < 0.01
   end
 
   context 'recursive timeouts' do
