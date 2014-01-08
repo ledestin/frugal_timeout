@@ -330,7 +330,9 @@ describe FrugalTimeout::RequestQueue do
     it 'no expired requests are left in the queue' do
       @requests.queue(0, FrugalTimeout::Error)
       @requests.size.should == 1
-      expect { @requests.handleExpiry }.to raise_error
+      expect {
+	Thread.new { @requests.handleExpiry }.join
+      }.to raise_error
       @requests.size.should == 0
     end
 
