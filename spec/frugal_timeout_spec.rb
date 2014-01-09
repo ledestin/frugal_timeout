@@ -483,9 +483,9 @@ describe FrugalTimeout::SortedQueue do
   it '#reject_until_mismatch!' do
     @queue.push 'a'
     @queue.push 'b'
-    res = @queue.reject_until_mismatch! { |el| el < 'b' }
-    res.size.should == 1
-    res.first.should == 'a'
+    @queue.reject_until_mismatch! { |el| el < 'b' }
+    @queue.size.should == 1
+    @queue.first.should == 'b'
   end
 
   it 'calls onAdd callback' do

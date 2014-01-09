@@ -286,13 +286,11 @@ module FrugalTimeout
     end
 
     def reject_until_mismatch! &b
-      res = []
       reject! { |el|
 	break unless b.call el
 
-	res << el
+	true
       }
-      res
     end
 
     private
