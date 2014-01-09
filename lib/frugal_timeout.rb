@@ -268,9 +268,9 @@ module FrugalTimeout
 	when 1
 	  @array.unshift arg
 	end
+	@onAdd.call arg
       }
       @unsorted = true
-      args.each { |arg| @onAdd.call arg }
     end
     alias :<< :push
 
