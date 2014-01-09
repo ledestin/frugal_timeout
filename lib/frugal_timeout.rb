@@ -31,14 +31,14 @@ require 'timeout'
 #--
 # }}}1
 module FrugalTimeout
-  DO_NOTHING = proc {}
-
   # {{{1 Error
   class Error < Timeout::Error #:nodoc:
   end
 
   # {{{1 Hookable
   module Hookable
+    DO_NOTHING = proc {}
+
     def def_hook *names
       names.each { |name|
 	eval <<-EOF
@@ -114,11 +114,12 @@ module FrugalTimeout
 
   # {{{1 RequestQueue
   class RequestQueue #:nodoc:
+    include Hookable
     include MonitorMixin
 
     def initialize
       super
-      @onEnforce, @onNewNearestRequest = DO_NOTHING, DO_NOTHING
+      def_hook_synced :onEnforce, :onNewNearestRequest
       @requests, @threadIdx = SortedQueue.new, Storage.new
 
       @requests.onAdd { |r| @threadIdx.set r.thread, r }
@@ -130,14 +131,6 @@ module FrugalTimeout
 	purgeAndEnforceExpired
 	sendNearestActiveRequest
       }
-    end
-
-    def onEnforce &b
-      synchronize { @onEnforce = b || DO_NOTHING }
-    end
-
-    def onNewNearestRequest &b
-      synchronize { @onNewNearestRequest = b || DO_NOTHING }
     end
 
     def size
@@ -193,11 +186,13 @@ module FrugalTimeout
   # expires. In this case, processing of the old request stops and the new
   # request processing starts.
   class SleeperNotifier #:nodoc:
+    include Hookable
     include MonitorMixin
 
     def initialize
       super()
-      @condVar, @expireAt, @onExpiry = new_cond, nil, DO_NOTHING
+      def_hook_synced :onExpiry
+      @condVar, @expireAt = new_cond, nil
 
       @thread = Thread.new {
 	loop {
@@ -217,10 +212,6 @@ module FrugalTimeout
 	}
       }
       ObjectSpace.define_finalizer self, proc { @thread.kill }
-    end
-
-    def onExpiry &b
-      synchronize { @onExpiry = b || DO_NOTHING }
     end
 
     def expireAt time
@@ -255,26 +246,19 @@ module FrugalTimeout
   # {{{1 SortedQueue
   class SortedQueue #:nodoc:
     extend Forwardable
+    include Hookable
 
     def_delegators :@array, :empty?, :first, :size
 
     def initialize storage=[]
       super()
       @array, @unsorted = storage, false
-      @onAdd = @onRemove = DO_NOTHING
+      def_hook :onAdd, :onRemove
     end
 
     def last
       sort!
       @array.last
-    end
-
-    def onAdd &b
-      @onAdd = b || DO_NOTHING
-    end
-
-    def onRemove &b
-      @onRemove = b || DO_NOTHING
     end
 
     def push *args
