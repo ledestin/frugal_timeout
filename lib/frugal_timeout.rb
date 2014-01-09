@@ -158,7 +158,6 @@ module FrugalTimeout
       end
     end
 
-    # Purge and enforce expired timeouts.
     def purgeAndEnforceExpired
       @onEnforce.call
       now = MonotonicTime.now
