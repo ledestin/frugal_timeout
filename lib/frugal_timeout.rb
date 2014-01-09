@@ -37,6 +37,27 @@ module FrugalTimeout
   class Error < Timeout::Error #:nodoc:
   end
 
+  # {{{1 Hookable
+  module Hookable
+    def def_hook name
+      eval <<-EOF
+	def #{name} &b
+	  @#{name} = b || DO_NOTHING
+	end
+	#{name}
+      EOF
+    end
+
+    def def_hook_synced name
+      eval <<-EOF
+	def #{name} &b
+	  synchronize { @#{name} = b || DO_NOTHING }
+	end
+	#{name}
+      EOF
+    end
+  end
+
   # {{{1 MonotonicTime
   class MonotonicTime #:nodoc:
     NANOS_IN_SECOND = 1_000_000_000
