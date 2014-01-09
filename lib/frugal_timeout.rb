@@ -243,10 +243,23 @@ module FrugalTimeout
   end
 
   # {{{1 SortedQueue
+  # Array-like structure, providing automatic sorting of elements. When you're
+  # accessing elements via #reject!, #last or #first, the elements you access
+  # are sorted. There are some optimizations to ensure that elements aren't
+  # sorted each time you call those methods.
+  #
+  # Provides hooks: onAdd, onRemove.
+  # To setup, do something like this: `queue.onAdd { |el| puts "added #{el}" }'.
   class SortedQueue #:nodoc:
     extend Forwardable
     include Hookable
 
+    # I don't sort underlying array before calling #first because:
+    # 1. When a new element is added, it'll be placed correctly at the beginning
+    #    if it should be first.
+    # 2. If items are removed from the underlying array, it'll be in the sorted
+    #    state afterwards. Thus, in this case, #first will behave correctly as
+    #    well.
     def_delegators :@array, :empty?, :first, :size
 
     def initialize storage=[]
