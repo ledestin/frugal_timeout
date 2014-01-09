@@ -302,6 +302,14 @@ module FrugalTimeout
   end
 
   # {{{1 Storage
+  # Stores values for keys, such as:
+  # 1. `set key, val' will store val.
+  # 2. `set key, val2' will store [val, val2].
+  # 3. `delete key, val2' will lead to storing just val again.
+  # I.e. array is used only when it's absolutely necessary.
+  #
+  # While it's harder to write code because of this, we do save memory by not
+  # instantiating all those arrays.
   class Storage
     def initialize
       @storage = {}
