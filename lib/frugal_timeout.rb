@@ -39,22 +39,26 @@ module FrugalTimeout
 
   # {{{1 Hookable
   module Hookable
-    def def_hook name
-      eval <<-EOF
-	def #{name} &b
-	  @#{name} = b || DO_NOTHING
-	end
-	#{name}
-      EOF
+    def def_hook *names
+      names.each { |name|
+	eval <<-EOF
+	  def #{name} &b
+	    @#{name} = b || DO_NOTHING
+	  end
+	  #{name}
+	EOF
+      }
     end
 
-    def def_hook_synced name
-      eval <<-EOF
-	def #{name} &b
-	  synchronize { @#{name} = b || DO_NOTHING }
-	end
-	#{name}
-      EOF
+    def def_hook_synced *names
+      names.each { |name|
+	eval <<-EOF
+	  def #{name} &b
+	    synchronize { @#{name} = b || DO_NOTHING }
+	  end
+	  #{name}
+	EOF
+      }
     end
   end
 
