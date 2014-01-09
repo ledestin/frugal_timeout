@@ -149,12 +149,12 @@ module FrugalTimeout
     private
 
     def defuse_thread! thread
-      return unless stored = @threadIdx[thread]
+      return unless request = @threadIdx[thread]
 
-      if stored.respond_to? :each
-	stored.each { |r| r.defuse! }
+      if request.respond_to? :each
+	request.each { |r| r.defuse! }
       else
-	stored.defuse!
+	request.defuse!
       end
     end
 
