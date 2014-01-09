@@ -162,7 +162,7 @@ module FrugalTimeout
       @onEnforce.call
       now = MonotonicTime.now
       @requests.reject_until_mismatch! { |r|
-	if @requests.first.at <= now
+	if r.at <= now
 	  r.enforceTimeout && defuseForThread!(r.thread)
 	  true
 	end
