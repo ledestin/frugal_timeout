@@ -285,13 +285,6 @@ module FrugalTimeout
       res
     end
 
-    def shift
-      sort!
-      res = @array.shift
-      @onRemove.call res
-      res
-    end
-
     private
     def sort!
       return unless @unsorted

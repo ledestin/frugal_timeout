@@ -450,14 +450,6 @@ describe FrugalTimeout::SortedQueue do
     res.first.should == 'a'
   end
 
-  it '#shift calls onRemove' do
-    called = nil
-    @queue.onRemove { |el| called = el }
-    @queue.push 'a'
-    @queue.shift
-    called.should == 'a'
-  end
-
   it 'calls onAdd callback' do
     called = nil
     @queue.onAdd { |el| called = el }
