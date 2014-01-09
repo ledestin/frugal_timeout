@@ -129,7 +129,7 @@ module FrugalTimeout
     def handleExpiry
       synchronize {
 	purgeAndEnforceExpired
-	sendNearestActiveRequest
+	sendNearestActive
       }
     end
 
@@ -170,7 +170,7 @@ module FrugalTimeout
       }
     end
 
-    def sendNearestActiveRequest
+    def sendNearestActive
       @requests.reject_until_mismatch! { |r| r.defused? }
       @onNewNearestRequest.call @requests.first unless @requests.empty?
     end
