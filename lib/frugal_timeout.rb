@@ -276,12 +276,13 @@ module FrugalTimeout
     alias :<< :push
 
     def reject! &b
-      ar = []
       sort!
       @array.reject! { |el|
-	ar << el if b.call el
+	if b.call el
+	  @onRemove.call el
+	  true
+	end
       }
-      ar.each { |el| @onRemove.call el }
     end
 
     def reject_until_mismatch! &b
