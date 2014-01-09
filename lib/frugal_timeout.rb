@@ -148,7 +148,7 @@ module FrugalTimeout
 
     private
 
-    def defuse_thread! thread
+    def defuse_requests! thread
       return unless request = @threadIdx[thread]
 
       if request.respond_to? :each
@@ -164,7 +164,7 @@ module FrugalTimeout
       now = MonotonicTime.now
       @requests.reject_until_mismatch! { |r|
 	if @requests.first.at <= now
-	  r.enforceTimeout && defuse_thread!(r.thread)
+	  r.enforceTimeout && defuse_requests!(r.thread)
 	  true
 	end
       }
