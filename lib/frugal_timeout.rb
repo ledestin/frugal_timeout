@@ -151,7 +151,7 @@ module FrugalTimeout
     def defuse_thread! thread
       return unless stored = @threadIdx[thread]
 
-      if stored.is_a? Array
+      if stored.respond_to? :each
 	stored.each { |r| r.defuse! }
       else
 	stored.defuse!
