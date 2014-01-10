@@ -108,8 +108,9 @@ module FrugalTimeout
     def queue sec, klass
       request = Request.new(Thread.current, MonotonicTime.now + sec, klass)
       synchronize {
-	@requests << request
-	@onNewNearestRequest.call(request) if @requests.first == request
+	@requests.push(request) {
+	  @onNewNearestRequest.call request
+	}
       }
       request
     end

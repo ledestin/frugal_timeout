@@ -451,6 +451,27 @@ describe FrugalTimeout::SortedQueue do
     @queue.first.should == item
   end
 
+  it '#push calls block if element is added as the first' do
+    called = nil
+    @queue.push(2) { |el| called = el }
+    called.should == 2
+    @queue.push(1) { |el| called = el }
+    called.should == 1
+  end
+
+  it "#push doesn't call block if element isn't added as the first" do
+    @queue.push 1
+    called = nil
+    @queue.push(3) { |el| called = el }
+    called.should == nil
+  end
+
+  it '#push raises exception if block given for multiple pushed elements' do
+    expect {
+      @queue.push(1, 2) { }
+    }.to raise_error ArgumentError
+  end
+
   it 'supports << method' do
     @queue << 'a'
     @queue.first.should == 'a'

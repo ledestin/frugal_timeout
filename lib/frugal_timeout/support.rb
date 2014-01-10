@@ -77,12 +77,16 @@ module FrugalTimeout
     end
 
     def push *args
+      raise ArgumentError, "block can't be given for multiple elements" \
+	if block_given? && args.size > 1
+
       args.each { |arg|
 	case @array.first <=> arg
-	when -1, 0, nil
+	when -1
 	  @array.push arg
-	when 1
+	when 0, 1, nil
 	  @array.unshift arg
+	  yield arg if block_given?
 	end
 	@onAdd.call arg
       }
