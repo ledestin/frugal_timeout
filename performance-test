@@ -16,7 +16,8 @@ def recursive_timeout n
     end
   }
 rescue FrugalTimeout::Error
-  @m.synchronize { @ar << FrugalTimeout::MonotonicTime.now - start }
+  finish = FrugalTimeout::MonotonicTime.now 
+  @m.synchronize { @ar << finish - start }
 end
 
 THREAD_COUNT, TIMES = 150, 100
