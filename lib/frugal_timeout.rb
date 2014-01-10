@@ -65,6 +65,7 @@ module FrugalTimeout
 	return if @defused
 
 	@thread.raise @klass, 'execution expired'
+	@defused = true
 	true
       }
     end

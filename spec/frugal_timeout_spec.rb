@@ -291,12 +291,20 @@ end
 
 # {{{1 Request
 describe FrugalTimeout::Request do
-  it '#defuse! and #defused? work' do
-    req = FrugalTimeout::Request.new(Thread.current,
+  before :each do
+    @request = FrugalTimeout::Request.new(Thread.current,
       MonotonicTime.now, FrugalTimeout::Error)
-    req.defused?.should == false
-    req.defuse!
-    req.defused?.should == true
+  end
+
+  it '#defuse! and #defused? work' do
+    @request.defused?.should == false
+    @request.defuse!
+    @request.defused?.should == true
+  end
+
+  it 'is defused after enforcing' do
+    expect { Thread.new { @request.enforceTimeout }.join }.to raise_error
+    @request.defused?.should == true
   end
 end
 
