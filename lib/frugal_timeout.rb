@@ -75,6 +75,12 @@ module FrugalTimeout
   end
 
   # {{{1 RequestQueue
+  # Contains requests to be processed. Calls @onNewNearestRequest when another 
+  # request becomes the first in line. Calls @onEnforce when expired requests
+  # are removed and enforced.
+  #
+  # #queue adds requests.
+  # #handleExpiry removes and enforces requests.
   class RequestQueue #:nodoc:
     include Hookable
     include MonitorMixin
@@ -110,6 +116,7 @@ module FrugalTimeout
 
     private
 
+    # Defuses requests belonging to the passed thread.
     def defuseForThread! thread
       return unless request = @threadIdx[thread]
 
