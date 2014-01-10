@@ -36,6 +36,9 @@ module FrugalTimeout
   end
 
   # {{{1 Request
+  # Timeout request, holding expiry time, what exception to raise and in which
+  # thread. It is active by default, but can be defused. If it's defused, then
+  # timeout won't be enforced when #enforceTimeout is called.
   class Request #:nodoc:
     include Comparable
     @@mutex = Mutex.new
