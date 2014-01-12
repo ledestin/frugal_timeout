@@ -509,12 +509,19 @@ describe FrugalTimeout::SortedQueue do
     }.not_to raise_error
   end
 
-  it '#reject_until_mismatch!' do
-    @queue.push 'a'
-    @queue.push 'b'
-    @queue.reject_until_mismatch! { |el| el < 'b' }
-    @queue.size.should == 1
-    @queue.first.should == 'b'
+  context '#reject_until_mismatch!' do
+    it 'removes one of the elements and returns @queue' do
+      @queue.push 'a', 'b'
+      @queue.reject_until_mismatch! { |el| el < 'b' }.should == @queue
+      @queue.size.should == 1
+      @queue.first.should == 'b'
+    end
+
+    it "doesn't remove any elements and returns nil" do
+      @queue.push 'a', 'b'
+      @queue.reject_until_mismatch! { }.should == nil
+      @queue.size.should == 2
+    end
   end
 
   it 'calls onAdd callback' do

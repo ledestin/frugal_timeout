@@ -105,11 +105,13 @@ module FrugalTimeout
     end
 
     def reject_until_mismatch! &b
+      curSize = size
       reject! { |el|
 	break unless b.call el
 
 	true
       }
+      curSize == size ? nil : self
     end
 
     private
