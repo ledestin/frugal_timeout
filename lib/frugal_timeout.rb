@@ -82,7 +82,7 @@ module FrugalTimeout
   # are removed and enforced.
   #
   # #queue adds requests.
-  # #handleExpiry removes and enforces requests.
+  # #enforceExpired removes and enforces requests.
   class RequestQueue #:nodoc:
     include Hookable
     include MonitorMixin
@@ -96,7 +96,7 @@ module FrugalTimeout
       @requests.onRemove { |r| @threadIdx.delete r.thread, r }
     end
 
-    def handleExpiry
+    def enforceExpired
       synchronize {
 	purgeAndEnforceExpired
 	sendNearestActive
@@ -220,7 +220,7 @@ module FrugalTimeout
   @requestQueue.onNewNearestRequest { |request|
     sleeper.expireAt request.at
   }
-  sleeper.onExpiry { @requestQueue.handleExpiry }
+  sleeper.onExpiry { @requestQueue.enforceExpired }
 
   # {{{2 Methods
 

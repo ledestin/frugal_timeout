@@ -339,12 +339,12 @@ describe FrugalTimeout::RequestQueue do
     end
   end
 
-  context 'after handleExpiry' do
-    it 'invokes onEnforce on handleExpiry' do
+  context 'after enforceExpired' do
+    it 'invokes onEnforce on enforceExpired' do
       called = false
       @requests.onEnforce { called = true }
       @requests.queue(0, FrugalTimeout::Error)
-      expect { @requests.handleExpiry }.to raise_error
+      expect { @requests.enforceExpired }.to raise_error
       called.should == true
     end
 
@@ -353,7 +353,7 @@ describe FrugalTimeout::RequestQueue do
       @requests.queue(0, FrugalTimeout::Error)
       expect {
 	Thread.new {
-	  @requests.handleExpiry
+	  @requests.enforceExpired
 	}.join
       }.to raise_error FrugalTimeout::Error
       req.defused?.should == true
@@ -362,13 +362,13 @@ describe FrugalTimeout::RequestQueue do
     context 'onNewNearestRequest' do
       it 'invokes onNewNearestRequest' do
 	@requests.queue(0, FrugalTimeout::Error)
-	expect { @requests.handleExpiry }.to raise_error
+	expect { @requests.enforceExpired }.to raise_error
 	@ar.size.should == 1
       end
 
       it "doesn't invoke onNewNearestRequest on a defused request" do
 	@requests.queue(0, FrugalTimeout::Error).defuse!
-	expect { @requests.handleExpiry }.not_to raise_error
+	expect { @requests.enforceExpired }.not_to raise_error
 	@requests.size.should == 0
       end
     end
@@ -377,14 +377,14 @@ describe FrugalTimeout::RequestQueue do
       @requests.queue(0, FrugalTimeout::Error)
       @requests.size.should == 1
       expect {
-	Thread.new { @requests.handleExpiry }.join
+	Thread.new { @requests.enforceExpired }.join
       }.to raise_error
       @requests.size.should == 0
     end
 
     it 'a non-expired request is left in the queue' do
       @requests.queue(10, FrugalTimeout::Error)
-      expect { @requests.handleExpiry }.not_to raise_error
+      expect { @requests.enforceExpired }.not_to raise_error
       @requests.size.should == 1
     end
   end
