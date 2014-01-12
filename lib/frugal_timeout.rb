@@ -77,9 +77,9 @@ module FrugalTimeout
   end
 
   # {{{1 RequestQueue
-  # Contains requests to be processed. Calls @onNewNearestRequest when another 
-  # request becomes the first in line. Calls @onEnforce when expired requests
-  # are removed and enforced.
+  # Contains sorted requests to be processed. Calls @onNewNearestRequest when
+  # another request becomes the first in line. Calls @onEnforce when expired
+  # requests are removed and enforced.
   #
   # #queue adds requests.
   # #enforceExpired removes and enforces requests.
