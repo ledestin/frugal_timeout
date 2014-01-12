@@ -98,8 +98,7 @@ module FrugalTimeout
 
     def enforceExpired
       synchronize {
-	purgeAndEnforceExpired
-	sendNearestActive
+	purgeAndEnforceExpired && sendNearestActive
       }
     end
 

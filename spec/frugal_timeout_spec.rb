@@ -371,6 +371,13 @@ describe FrugalTimeout::RequestQueue do
 	expect { @requests.enforceExpired }.not_to raise_error
 	@requests.size.should == 0
       end
+
+      it "doesn't invoke onNewNearestRequest if no requests expired yet" do
+	@requests.queue(10, FrugalTimeout::Error)
+	expect { @requests.enforceExpired }.not_to raise_error
+	# 1 has been put there by #queue.
+	@ar.size.should == 1
+      end
     end
 
     it 'no expired requests are left in the queue' do
