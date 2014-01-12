@@ -54,7 +54,7 @@ module FrugalTimeout
       @at <=> other.at
     end
 
-    # Timeout won't be enforced if you defuse a request.
+    # Timeout won't be enforced if you defuse the request.
     def defuse!
       @@mutex.synchronize { @defused = true }
     end
