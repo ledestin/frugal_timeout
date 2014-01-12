@@ -370,6 +370,7 @@ describe FrugalTimeout::RequestQueue do
 	@requests.queue(0, FrugalTimeout::Error).defuse!
 	expect { @requests.enforceExpired }.not_to raise_error
 	@requests.size.should == 0
+	@ar.size == 1
       end
 
       it "doesn't invoke onNewNearestRequest if no requests expired yet" do
