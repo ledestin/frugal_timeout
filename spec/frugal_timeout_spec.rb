@@ -97,7 +97,7 @@ describe FrugalTimeout do
     res, resMutex = [], Mutex.new
     (cnt = 5).times { new_timeout_request 1, res, resMutex }
     sleep 1 until res.size == cnt
-    res.each { |sec| sec.round.should == 1 }
+    res.avg.round.should == 1
   end
 
   it 'handles multiple concurrent same timeouts' do
