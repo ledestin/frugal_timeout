@@ -38,7 +38,7 @@ module FrugalTimeout
   # {{{1 Request
   # Timeout request, holding expiry time, what exception to raise and in which
   # thread. It is active by default, but can be defused. If it's defused, then
-  # timeout won't be enforced when #enforceTimeout is called.
+  # timeout won't be enforced when #enforce is called.
   class Request #:nodoc:
     include Comparable
     @@mutex = Mutex.new
@@ -63,7 +63,7 @@ module FrugalTimeout
       @@mutex.synchronize { @defused }
     end
 
-    def enforceTimeout
+    def enforce
       @@mutex.synchronize {
 	return if @defused
 
@@ -133,7 +133,7 @@ module FrugalTimeout
       now = MonotonicTime.now
       @requests.reject_until_mismatch! { |r|
 	if r.at <= now
-	  r.enforceTimeout && defuseForThread!(r.thread)
+	  r.enforce && defuseForThread!(r.thread)
 	  true
 	end
       }

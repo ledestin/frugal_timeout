@@ -303,7 +303,7 @@ describe FrugalTimeout::Request do
   end
 
   it 'is defused after enforcing' do
-    expect { Thread.new { @request.enforceTimeout }.join }.to raise_error
+    expect { Thread.new { @request.enforce }.join }.to raise_error
     @request.defused?.should == true
   end
 end
