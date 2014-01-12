@@ -63,9 +63,11 @@ module FrugalTimeout
       @@mutex.synchronize { @defused }
     end
 
+    # Enforce this timeout request, unless it's been defused.
+    # Return true if was enforced, false otherwise.
     def enforce
       @@mutex.synchronize {
-	return if @defused
+	return false if @defused
 
 	@thread.raise @klass, 'execution expired'
 	@defused = true
