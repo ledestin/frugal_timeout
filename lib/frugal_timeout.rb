@@ -240,8 +240,8 @@ module FrugalTimeout
     return yield sec if sec.nil? || sec <= 0
 
     innerException = klass || Class.new(Timeout::ExitException)
-    request = @requestQueue.queue(sec, innerException)
     begin
+      request = @requestQueue.queue(sec, innerException)
       yield sec
     rescue innerException => e
       raise if klass
