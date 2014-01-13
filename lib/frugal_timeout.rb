@@ -211,8 +211,7 @@ module FrugalTimeout
   end
 
   # {{{1 Main code
-  @requestQueue = RequestQueue.new
-  sleeper = SleeperNotifier.new
+  @requestQueue, sleeper = RequestQueue.new, SleeperNotifier.new
   @requestQueue.onNewNearestRequest { |request|
     sleeper.expireAt request.at
   }
