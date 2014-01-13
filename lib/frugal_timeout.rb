@@ -194,10 +194,8 @@ module FrugalTimeout
     private
 
     def calcTimeLeft
-      synchronize {
-	delay = @expireAt - MonotonicTime.now
-	delay < 0 ? 0 : delay
-      }
+      delay = @expireAt - MonotonicTime.now
+      delay < 0 ? 0 : delay
     end
 
     def disposeOfRequest
