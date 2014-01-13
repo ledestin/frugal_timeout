@@ -167,11 +167,7 @@ module FrugalTimeout
       @thread = Thread.new {
 	loop {
 	  synchronize { @onExpiry }.call if synchronize {
-	    # Sleep forever until a request comes in.
-	    unless @expireAt
-	      wait
-	      next
-	    end
+	    waitForValidRequest
 
 	    timeLeft = calcTimeLeft
 	    disposeOfRequest
@@ -208,6 +204,10 @@ module FrugalTimeout
 
     def wait sec=nil
       @condVar.wait sec
+    end
+
+    def waitForValidRequest
+      wait until @expireAt
     end
   end
 
