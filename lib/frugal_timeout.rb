@@ -118,7 +118,7 @@ module FrugalTimeout
 
     private
 
-    # Defuses requests belonging to the passed thread.
+    # Defuse requests belonging to the passed thread.
     def defuseForThread! thread
       return unless request = @threadIdx[thread]
 
