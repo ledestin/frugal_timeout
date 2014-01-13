@@ -153,8 +153,8 @@ module FrugalTimeout
   # 3. After the expiry time comes, execute the callback.
   #
   # It's possible to set a new expiry time before the time set previously
-  # expires. In this case, processing of the old request stops and the new
-  # request processing starts.
+  # expires. In this case, processing of the old request stops and processing of
+  # the new request starts.
   class SleeperNotifier #:nodoc:
     include Hookable
     include MonitorMixin
