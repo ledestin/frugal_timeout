@@ -168,7 +168,7 @@ module FrugalTimeout
 	  synchronize { @onExpiry }.call if synchronize {
 	    waitForValidRequest
 
-	    timeLeft = calcTimeLeft
+	    timeLeft = timeLeftUntilExpiry
 	    disposeOfRequest
 	    elapsedTime = MonotonicTime.measure { wait timeLeft }
 
@@ -188,17 +188,17 @@ module FrugalTimeout
 
     private
 
-    def calcTimeLeft
-      delay = @expireAt - MonotonicTime.now
-      delay < 0 ? 0 : delay
-    end
-
     def disposeOfRequest
       @expireAt = nil
     end
 
     def signalThread
       @condVar.signal
+    end
+
+    def timeLeftUntilExpiry
+      delay = @expireAt - MonotonicTime.now
+      delay < 0 ? 0 : delay
     end
 
     def wait sec=nil
