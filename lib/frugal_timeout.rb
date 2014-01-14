@@ -153,7 +153,8 @@ module FrugalTimeout
   # 3. After the expiry time comes, execute the callback.
   #
   # It's possible to set a new expiry time before the time set previously
-  # expires.
+  # expires. However, if the old request has already expired, @onExpiry will
+  # still be called.
   class SleeperNotifier #:nodoc:
     include Hookable
     include MonitorMixin
@@ -169,10 +170,7 @@ module FrugalTimeout
 	    waitForValidRequest
 
 	    timeLeft = timeLeftUntilExpiry
-	    # It's necessary to dispose of current request now, before we wait
-	    # for timeLeft to end or a new request to come. If we didn't do that
-	    # and no new request came while we were waiting, we would end up
-	    # processing the same request again on the next iteration.
+	    # Prevent processing of the same request again.
 	    disposeOfRequest
 	    elapsedTime = MonotonicTime.measure { wait timeLeft }
 
