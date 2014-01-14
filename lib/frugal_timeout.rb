@@ -169,6 +169,10 @@ module FrugalTimeout
 	    waitForValidRequest
 
 	    timeLeft = timeLeftUntilExpiry
+	    # It's necessary to dispose of current request now, before we wait
+	    # for timeLeft to end or a new request to come. If we didn't do that
+	    # and no new request came while we were waiting, we would end up
+	    # processing the same request again on the next iteration.
 	    disposeOfRequest
 	    elapsedTime = MonotonicTime.measure { wait timeLeft }
 
