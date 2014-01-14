@@ -244,14 +244,24 @@ module FrugalTimeout
     innerException = klass || Class.new(Timeout::ExitException)
     begin
       request = @requestQueue.queue(sec, innerException)
-      yield sec
+      # Defuse is here only for the case when exception comes from the yield
+      # block. Otherwise, when timeout exception is raised, the request is
+      # defused automatically.
+      #
+      # Now, if in ensure, timeout exception comes, the request has already been
+      # defused automatically, so even if ensure is interrupted, there's no
+      # problem.
+      begin
+	yield sec
+      ensure
+	request.defuse!
+      end
     rescue innerException => e
       raise if klass
 
       raise Error, e.message, e.backtrace
     ensure
       @onEnsure.call if @onEnsure
-      request.defuse! if request
     end
   end
   # }}}1

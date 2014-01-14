@@ -211,6 +211,16 @@ describe FrugalTimeout do
     sleep 2
   end
 
+  # Actually, there's a race here, but if timeout exception is raised, it's ok,
+  # it just means it was faster than the block exception.
+  it "doesn't raise timeout exception when block raises exception" do
+    FrugalTimeout.on_ensure { sleep 0.02 }
+    expect {
+      timeout(0.01) { raise IOError }
+    }.to raise_error IOError
+    FrugalTimeout.on_ensure
+  end
+
   it 'handles exception within timeout()' do
     begin
       timeout(1) { raise 'lala' }
