@@ -249,7 +249,7 @@ module FrugalTimeout
       raise Error, e.message, e.backtrace
     ensure
       @onEnsure.call if @onEnsure
-      request.defuse!
+      request.defuse! if request
     end
   end
   # }}}1
