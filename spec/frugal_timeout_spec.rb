@@ -499,27 +499,29 @@ describe FrugalTimeout::SortedQueue do
       }.to raise_error ArgumentError
     end
 
-    it 'makes first in order item to be sorted first' do
-      @queue.push 'b', 'a'
-      @queue.first.should == 'a'
-      @queue.reject! { |item| item == 'a' }
-      @queue.first.should == 'b'
-      @queue.size.should == 1
-    end
-
-    it "doesn't sort underlying array if pushed values are first in order" do
-      class MockArray < Array
-	def sort!
-	  raise 'not supposed to call sort!'
-	end
+    context 'sorting' do
+      it 'makes first in order item to be sorted first' do
+	@queue.push 'b', 'a'
+	@queue.first.should == 'a'
+	@queue.reject! { |item| item == 'a' }
+	@queue.first.should == 'b'
+	@queue.size.should == 1
       end
-      queue = FrugalTimeout::SortedQueue.new MockArray.new
-      expect {
-	queue.push 'c'
-	queue.push 'b'
-	queue.push 'a'
-	queue.first == 'a'
-      }.not_to raise_error
+
+      it "doesn't sort underlying array if pushed values are first in order" do
+	class MockArray < Array
+	  def sort!
+	    raise 'not supposed to call sort!'
+	  end
+	end
+	queue = FrugalTimeout::SortedQueue.new MockArray.new
+	expect {
+	  queue.push 'c'
+	  queue.push 'b'
+	  queue.push 'a'
+	  queue.first == 'a'
+	}.not_to raise_error
+      end
     end
   end
 
