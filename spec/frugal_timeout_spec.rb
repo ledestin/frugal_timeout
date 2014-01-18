@@ -581,16 +581,16 @@ describe FrugalTimeout::SortedQueue do
   end
 
   context 'callbacks' do
-    it 'calls onAdd callback' do
+    it 'calls on_add callback' do
       called = nil
-      @queue.onAdd { |el| called = el }
+      @queue.on_add { |el| called = el }
       @queue.push 'a'
       called.should == 'a'
     end
 
-    it 'calls onRemove callback' do
+    it 'calls on_remove callback' do
       called = nil
-      @queue.onRemove { |el| called = el }
+      @queue.on_remove { |el| called = el }
       @queue.push 'a'
       @queue.reject! { |el| true }
       called.should  == 'a'

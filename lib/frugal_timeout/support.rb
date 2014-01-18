@@ -51,8 +51,8 @@ module FrugalTimeout
   # sorted. There are some optimizations to ensure that elements aren't sorted
   # each time you call those methods.
   #
-  # Provides hooks: onAdd, onRemove.
-  # To setup, do something like this: `queue.onAdd { |el| puts "added #{el}" }'.
+  # Provides hooks: on_add, on_remove.
+  # To setup, do something like this: `queue.on_add { |el| puts "added #{el}" }'.
   class SortedQueue #:nodoc:
     extend Forwardable
     include Hookable
@@ -68,7 +68,7 @@ module FrugalTimeout
     def initialize storage=[]
       super()
       @array, @unsorted = storage, false
-      def_hook :onAdd, :onRemove
+      def_hook :on_add, :on_remove
     end
 
     def push *args
@@ -86,7 +86,7 @@ module FrugalTimeout
 	  @array.unshift arg
 	  yield arg if block_given?
 	end
-	@onAdd.call arg
+	@on_add.call arg
       }
     end
     alias :<< :push
@@ -95,7 +95,7 @@ module FrugalTimeout
       sort!
       @array.reject! { |el|
 	if b.call el
-	  @onRemove.call el
+	  @on_remove.call el
 	  true
 	end
       }

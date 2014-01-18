@@ -92,8 +92,8 @@ module FrugalTimeout
       def_hook_synced :onEnforce, :onNewNearestRequest
       @requests, @threadIdx = SortedQueue.new, Storage.new
 
-      @requests.onAdd { |r| @threadIdx.set r.thread, r }
-      @requests.onRemove { |r| @threadIdx.delete r.thread, r }
+      @requests.on_add { |r| @threadIdx.set r.thread, r }
+      @requests.on_remove { |r| @threadIdx.delete r.thread, r }
     end
 
     def enforceExpired
