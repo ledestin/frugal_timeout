@@ -508,6 +508,24 @@ describe FrugalTimeout::SortedQueue do
 	@queue.size.should == 1
       end
 
+      context 'works correctly if pushed values are <= the first element' do
+	it 'as a single #push call' do
+	  @queue.push 'c', 'b', 'a'
+	  ar = []
+	  @queue.reject! { |el| ar << el }
+	  ar.should == ['a', 'b', 'c']
+	end
+
+	it 'as multiple push calls' do
+	  @queue.push 'c'
+	  @queue.push 'b'
+	  @queue.push 'a'
+	  ar = []
+	  @queue.reject! { |el| ar << el }
+	  ar.should == ['a', 'b', 'c']
+	end
+      end
+
       it "doesn't sort underlying array if pushed values are first in order" do
 	class MockArray < Array
 	  def sort!
