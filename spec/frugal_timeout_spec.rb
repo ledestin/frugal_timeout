@@ -479,6 +479,13 @@ describe FrugalTimeout::SortedQueue do
       called.should == 1
     end
 
+    it "doesn't call block if the pushed element is the same as first" do
+      @queue.push 1
+      called = nil
+      @queue.push(1) { called = true }
+      called.should be_nil
+    end
+
     it "doesn't call block if element isn't sorted to be first" do
       @queue.push 1
       called = nil

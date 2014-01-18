@@ -79,7 +79,9 @@ module FrugalTimeout
 	case @array.first <=> arg
 	when -1
 	  @array.push arg
-	when 0, 1, nil
+	when 0
+	  @array.unshift arg
+	when 1, nil
 	  @array.unshift arg
 	  yield arg if block_given?
 	end
