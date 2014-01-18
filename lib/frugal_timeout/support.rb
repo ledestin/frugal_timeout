@@ -79,6 +79,7 @@ module FrugalTimeout
 	case @array.first <=> arg
 	when -1
 	  @array.push arg
+	  @unsorted = true
 	when 0
 	  @array.unshift arg
 	when 1, nil
@@ -87,7 +88,6 @@ module FrugalTimeout
 	end
 	@onAdd.call arg
       }
-      @unsorted = true
     end
     alias :<< :push
 

@@ -538,6 +538,13 @@ describe FrugalTimeout::SortedQueue do
 	  queue.push 'b'
 	  queue.push 'a'
 	  queue.first == 'a'
+	  queue.reject! { true }
+	}.not_to raise_error
+
+	expect {
+	  queue.push 'c', 'b', 'a'
+	  queue.first == 'a'
+	  queue.reject! {}
 	}.not_to raise_error
       end
     end
