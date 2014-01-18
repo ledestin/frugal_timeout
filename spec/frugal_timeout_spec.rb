@@ -463,43 +463,60 @@ describe FrugalTimeout::SortedQueue do
     @queue = FrugalTimeout::SortedQueue.new
   end
 
-  it 'allows to push items into queue' do
-    item = 'a'
-    @queue.push item
-    @queue.size.should == 1
-    @queue.first.should == item
-  end
+  context '#push' do
+    it 'adds item into queue' do
+      item = 'a'
+      @queue.push item
+      @queue.size.should == 1
+      @queue.first.should == item
+    end
 
-  it '#push calls block if element is sorted to be first' do
-    called = nil
-    @queue.push(2) { |el| called = el }
-    called.should == 2
-    @queue.push(1) { |el| called = el }
-    called.should == 1
-  end
+    it 'calls block if element is sorted to be first' do
+      called = nil
+      @queue.push(2) { |el| called = el }
+      called.should == 2
+      @queue.push(1) { |el| called = el }
+      called.should == 1
+    end
 
-  it "#push doesn't call block if element isn't sorted to be first" do
-    @queue.push 1
-    called = nil
-    @queue.push(3) { |el| called = el }
-    called.should == nil
-  end
+    it "doesn't call block if element isn't sorted to be first" do
+      @queue.push 1
+      called = nil
+      @queue.push(3) { |el| called = el }
+      called.should == nil
+    end
 
-  it '#push raises exception if block given for multiple pushed elements' do
-    expect {
-      @queue.push(1, 2) { }
-    }.to raise_error ArgumentError
+    it 'raises exception if block given for multiple pushed elements' do
+      expect {
+	@queue.push(1, 2) { }
+      }.to raise_error ArgumentError
+    end
+
+    it 'makes first in order item to be sorted first' do
+      @queue.push 'b', 'a'
+      @queue.first.should == 'a'
+      @queue.last.should == 'b'
+    end
+
+    it "doesn't sort underlying array if pushed values are first in order" do
+      class MockArray < Array
+	def sort!
+	  raise 'not supposed to call sort!'
+	end
+      end
+      queue = FrugalTimeout::SortedQueue.new MockArray.new
+      expect {
+	queue.push 'c'
+	queue.push 'b'
+	queue.push 'a'
+	queue.first == 'a'
+      }.not_to raise_error
+    end
   end
 
   it '#<< method is supported' do
     @queue << 'a'
     @queue.first.should == 'a'
-  end
-
-  it 'makes first in order item to be sorted first' do
-    @queue.push 'b', 'a'
-    @queue.first.should == 'a'
-    @queue.last.should == 'b'
   end
 
   it '#reject! works' do
@@ -510,21 +527,6 @@ describe FrugalTimeout::SortedQueue do
     }
     @queue.size.should == 1
     @queue.first.should == 'c'
-  end
-
-  it "doesn't sort underlying array if pushed values are first in order" do
-    class MockArray < Array
-      def sort!
-	raise 'not supposed to call sort!'
-      end
-    end
-    queue = FrugalTimeout::SortedQueue.new MockArray.new
-    expect {
-      queue.push 'c'
-      queue.push 'b'
-      queue.push 'a'
-      queue.first == 'a'
-    }.not_to raise_error
   end
 
   context '#reject_until_mismatch!' do
@@ -542,19 +544,21 @@ describe FrugalTimeout::SortedQueue do
     end
   end
 
-  it 'calls onAdd callback' do
-    called = nil
-    @queue.onAdd { |el| called = el }
-    @queue.push 'a'
-    called.should == 'a'
-  end
+  context 'callbacks' do
+    it 'calls onAdd callback' do
+      called = nil
+      @queue.onAdd { |el| called = el }
+      @queue.push 'a'
+      called.should == 'a'
+    end
 
-  it 'calls onRemove callback' do
-    called = nil
-    @queue.onRemove { |el| called = el }
-    @queue.push 'a'
-    @queue.reject! { |el| true }
-    called.should  == 'a'
+    it 'calls onRemove callback' do
+      called = nil
+      @queue.onRemove { |el| called = el }
+      @queue.push 'a'
+      @queue.reject! { |el| true }
+      called.should  == 'a'
+    end
   end
 end
 
