@@ -495,7 +495,9 @@ describe FrugalTimeout::SortedQueue do
     it 'makes first in order item to be sorted first' do
       @queue.push 'b', 'a'
       @queue.first.should == 'a'
-      @queue.last.should == 'b'
+      @queue.reject! { |item| item == 'a' }
+      @queue.first.should == 'b'
+      @queue.size.should == 1
     end
 
     it "doesn't sort underlying array if pushed values are first in order" do

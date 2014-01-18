@@ -71,11 +71,6 @@ module FrugalTimeout
       def_hook :onAdd, :onRemove
     end
 
-    def last
-      sort!
-      @array.last
-    end
-
     def push *args
       raise ArgumentError, "block can't be given for multiple elements" \
 	if block_given? && args.size > 1
