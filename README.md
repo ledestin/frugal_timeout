@@ -15,7 +15,7 @@ alternative that uses only 1 thread.
 
 Also, there's a race condition in the 1.9-2.0 stock timeout. Consider the
 following code:
-```
+```ruby
 timeout(0.02) {
   timeout(0.01, IOError) { sleep }
 }
@@ -28,7 +28,7 @@ will always rise IOError.
 
 ## Example
 
-```
+```ruby
 require 'frugal_timeout'
 
 begin
