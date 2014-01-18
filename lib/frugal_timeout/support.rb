@@ -47,9 +47,9 @@ module FrugalTimeout
 
   # {{{1 SortedQueue
   # Array-like structure, providing automatic sorting of elements. When you're
-  # accessing elements via #reject!, #last or #first, the elements you access
-  # are sorted. There are some optimizations to ensure that elements aren't
-  # sorted each time you call those methods.
+  # accessing elements via #reject! or #first, the elements you access are
+  # sorted. There are some optimizations to ensure that elements aren't sorted
+  # each time you call those methods.
   #
   # Provides hooks: onAdd, onRemove.
   # To setup, do something like this: `queue.onAdd { |el| puts "added #{el}" }'.
