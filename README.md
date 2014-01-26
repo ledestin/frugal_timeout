@@ -21,10 +21,10 @@ timeout(0.02) {
 }
 ```
 
-In this case, the stock timeout will most likely rise IOError, but, given the
-race condition, sometimes it can also rise Timeout::Error. Just put `sleep 0.1'
+In this case, the stock timeout will most likely raise IOError, but, given the
+race condition, sometimes it can also raise Timeout::Error. Just put `sleep 0.1'
 inside stock timeout ensure to trigger that. As of version 0.0.9, frugal_timeout
-will always rise IOError.
+will always raise IOError.
 
 ## Example
 
