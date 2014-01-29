@@ -503,7 +503,7 @@ describe FrugalTimeout::SortedQueue do
       it 'makes first in order item to be sorted first' do
 	@queue.push 'b', 'a'
 	@queue.first.should == 'a'
-	@queue.reject! { |item| item == 'a' }
+	@queue.reject_until_mismatch! { |item| item == 'a' }
 	@queue.first.should == 'b'
 	@queue.size.should == 1
       end
@@ -512,7 +512,7 @@ describe FrugalTimeout::SortedQueue do
 	it 'as a single #push call' do
 	  @queue.push 'c', 'b', 'a'
 	  ar = []
-	  @queue.reject! { |el| ar << el }
+	  @queue.reject_until_mismatch! { |el| ar << el }
 	  ar.should == ['a', 'b', 'c']
 	end
 
@@ -521,31 +521,9 @@ describe FrugalTimeout::SortedQueue do
 	  @queue.push 'b'
 	  @queue.push 'a'
 	  ar = []
-	  @queue.reject! { |el| ar << el }
+	  @queue.reject_until_mismatch! { |el| ar << el }
 	  ar.should == ['a', 'b', 'c']
 	end
-      end
-
-      it "doesn't sort underlying array if pushed values are first in order" do
-	class MockArray < Array
-	  def sort!
-	    raise 'not supposed to call sort!'
-	  end
-	end
-	queue = FrugalTimeout::SortedQueue.new MockArray.new
-	expect {
-	  queue.push 'c'
-	  queue.push 'b'
-	  queue.push 'a'
-	  queue.first == 'a'
-	  queue.reject! { true }
-	}.not_to raise_error
-
-	expect {
-	  queue.push 'c', 'b', 'a'
-	  queue.first == 'a'
-	  queue.reject! {}
-	}.not_to raise_error
       end
     end
   end
@@ -553,16 +531,6 @@ describe FrugalTimeout::SortedQueue do
   it '#<< method is supported' do
     @queue << 'a'
     @queue.first.should == 'a'
-  end
-
-  it '#reject! works' do
-    @queue.push 'a', 'b', 'c'
-    @queue.reject! { |item|
-      next true if item < 'c'
-      break
-    }
-    @queue.size.should == 1
-    @queue.first.should == 'c'
   end
 
   context '#reject_until_mismatch!' do
@@ -592,7 +560,7 @@ describe FrugalTimeout::SortedQueue do
       called = nil
       @queue.on_remove { |el| called = el }
       @queue.push 'a'
-      @queue.reject! { |el| true }
+      @queue.reject_until_mismatch! { |el| true }
       called.should  == 'a'
     end
   end
