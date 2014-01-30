@@ -1,7 +1,6 @@
 # Copyright (C) 2013, 2014 by Dmitry Maksyoma <ledestin@gmail.com>
 
 require 'hitimes'
-require 'sorted_array_binary'
 
 module FrugalTimeout
   # {{{1 Hookable
@@ -66,37 +65,58 @@ module FrugalTimeout
     #    well.
     def_delegators :@array, :empty?, :first, :size
 
-    def initialize
+    def initialize storage=[]
       super()
-      @array = SortedArrayBinary.new
+      @array, @unsorted = storage, false
       def_hook :on_add, :on_remove
     end
 
-    # If block is given, call it when a pushed element becomes first (and
-    # previous first != pushed element).
     def push *args
       raise ArgumentError, "block can't be given for multiple elements" \
 	if block_given? && args.size > 1
 
       args.each { |arg|
-	already_first = first == arg if block_given?
-	@array.push arg
+	case @array.first <=> arg
+	when -1
+	  @array.push arg
+	  @unsorted = true
+	when 0
+	  @array.unshift arg
+	when 1, nil
+	  @array.unshift arg
+	  yield arg if block_given?
+	end
 	@on_add.call arg
-	yield arg if block_given? && !already_first && first == arg
       }
-      self
     end
     alias :<< :push
 
+    def reject! &b
+      sort!
+      @array.reject! { |el|
+	if b.call el
+	  @on_remove.call el
+	  true
+	end
+      }
+    end
+
     def reject_until_mismatch! &b
       curSize = size
-      @array.reject! { |el|
+      reject! { |el|
 	break unless b.call el
 
-	@on_remove.call el
 	true
       }
       curSize == size ? nil : self
+    end
+
+    private
+    def sort!
+      return unless @unsorted
+
+      @array.sort!
+      @unsorted = false
     end
   end
 

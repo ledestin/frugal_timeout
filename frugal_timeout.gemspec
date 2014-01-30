@@ -13,5 +13,4 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'rspec', '>= 2.13'
   s.add_runtime_dependency 'hitimes', '~> 1.2'
-  s.add_runtime_dependency 'sorted_array_binary', '~> 0.0'
 end
