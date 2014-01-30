@@ -6,6 +6,8 @@ require './lib/frugal_timeout'
 Thread.abort_on_exception = true
 FrugalTimeout.dropin!
 
+THREAD_COUNT, TIMES = 150, 100
+
 def recursive_timeout n, delay
   start = FrugalTimeout::MonotonicTime.now
   timeout(delay) {
@@ -20,13 +22,16 @@ rescue FrugalTimeout::Error
   @m.synchronize { @ar << finish - start }
 end
 
-THREAD_COUNT, TIMES = 150, 100
-@ar, @m = [], Mutex.new
-THREAD_COUNT.times {
-  Thread.new {
-    recursive_timeout TIMES, 1
+def run is_random
+  @ar, @m = [], Mutex.new
+  THREAD_COUNT.times {
+    Thread.new {
+      recursive_timeout TIMES, is_random ? rand(10) : 1
+    }
   }
-}
-sleep 0.1 until @m.synchronize { @ar.size == THREAD_COUNT }
+  sleep 0.1 until @m.synchronize { @ar.size == THREAD_COUNT }
+  puts "#{THREAD_COUNT*TIMES} calls\navg: #{@ar.inject(:+)/@ar.size}"
+end
 
-puts "#{THREAD_COUNT*TIMES} calls\navg: #{@ar.inject(:+)/@ar.size}"
+run false
+
