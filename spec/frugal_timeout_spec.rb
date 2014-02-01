@@ -6,7 +6,6 @@ require 'frugal_timeout'
 
 FrugalTimeout.dropin!
 Thread.abort_on_exception = true
-MonotonicTime = FrugalTimeout::MonotonicTime
 
 SMALLEST_TIMEOUT = 0.0000001
 
@@ -282,20 +281,6 @@ describe FrugalTimeout::Hookable do
     @foo.run
     called.should == true
     called2.should == true
-  end
-end
-
-# {{{1 MonotonicTime
-describe FrugalTimeout::MonotonicTime do
-  it 'ticks properly' do
-    start = MonotonicTime.now
-    sleep 0.1
-    (MonotonicTime.now - start).round(1).should == 0.1
-  end
-
-  it '#measure works' do
-    sleptFor = MonotonicTime.measure { sleep 0.5 }
-    sleptFor.round(1).should == 0.5
   end
 end
 

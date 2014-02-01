@@ -1,6 +1,7 @@
 # Copyright (C) 2013, 2014 by Dmitry Maksyoma <ledestin@gmail.com>
 
 require 'monitor'
+require 'monotonic_time'
 require 'thread'
 require 'timeout'
 require 'frugal_timeout/support'

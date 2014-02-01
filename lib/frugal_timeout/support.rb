@@ -1,7 +1,5 @@
 # Copyright (C) 2013, 2014 by Dmitry Maksyoma <ledestin@gmail.com>
 
-require 'hitimes'
-
 module FrugalTimeout
   # {{{1 Hookable
   module Hookable
@@ -27,21 +25,6 @@ module FrugalTimeout
 	  #{name}
 	EOF
       }
-    end
-  end
-
-  # {{{1 MonotonicTime
-  class MonotonicTime #:nodoc:
-    NANOS_IN_SECOND = 1_000_000_000
-
-    def self.measure
-      start = now
-      yield
-      now - start
-    end
-
-    def self.now
-      Hitimes::Interval.now.start_instant.to_f/NANOS_IN_SECOND
     end
   end
 
