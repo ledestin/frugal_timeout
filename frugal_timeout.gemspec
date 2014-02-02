@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'frugal_timeout'
-  s.version     = '0.0.13'
-  s.date        = '2014-01-08'
+  s.version     = '0.0.14'
+  s.date        = '2014-02-02'
   s.summary     = 'Timeout.timeout replacement'
   s.description = 'Timeout.timeout replacement that uses only 1 thread'
   s.authors     = ['Dmitry Maksyoma']
