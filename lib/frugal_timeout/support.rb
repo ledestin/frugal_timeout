@@ -4,7 +4,7 @@ require 'forwardable'
 
 module FrugalTimeout
   # {{{1 Hookable
-  module Hookable
+  module Hookable #:nodoc:
     DO_NOTHING = proc {}
 
     def def_hook *names
@@ -114,7 +114,7 @@ module FrugalTimeout
   #
   # While it's harder to write code because of this, we do save memory by not
   # instantiating all those arrays.
-  class Storage
+  class Storage #:nodoc:
     def initialize
       @storage = {}
     end
