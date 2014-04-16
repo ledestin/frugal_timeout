@@ -1,5 +1,7 @@
 # Copyright (C) 2013, 2014 by Dmitry Maksyoma <ledestin@gmail.com>
 
+require 'forwardable'
+
 module FrugalTimeout
   # {{{1 Hookable
   module Hookable
