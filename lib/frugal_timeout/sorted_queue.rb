@@ -1,36 +1,9 @@
 # Copyright (C) 2013, 2014 by Dmitry Maksyoma <ledestin@gmail.com>
 
 require 'forwardable'
+require 'frugal_timeout/hookable'
 
 module FrugalTimeout
-  # {{{1 Hookable
-  module Hookable #:nodoc:
-    DO_NOTHING = proc {}
-
-    def def_hook *names
-      names.each { |name|
-	eval <<-EOF
-	  def #{name} &b
-	    @#{name} = b || DO_NOTHING
-	  end
-	  #{name}
-	EOF
-      }
-    end
-
-    def def_hook_synced *names
-      names.each { |name|
-	eval <<-EOF
-	  def #{name} &b
-	    synchronize { @#{name} = b || DO_NOTHING }
-	  end
-	  #{name}
-	EOF
-      }
-    end
-  end
-
-  # {{{1 SortedQueue
   # Array-like structure, providing automatic sorting of elements. When you're
   # accessing elements via #reject! or #first, the elements you access are
   # sorted. There are some optimizations to ensure that elements aren't sorted
@@ -104,50 +77,4 @@ module FrugalTimeout
       @unsorted = false
     end
   end
-
-  # {{{1 Storage
-  # Stores values for keys, such as:
-  # 1. `set key, val' will store val.
-  # 2. `set key, val2' will store [val, val2].
-  # 3. `delete key, val2' will lead to storing just val again.
-  # I.e. array is used only when it's absolutely necessary.
-  #
-  # While it's harder to write code because of this, we do save memory by not
-  # instantiating all those arrays.
-  class Storage #:nodoc:
-    def initialize
-      @storage = {}
-    end
-
-    def delete key, val=nil
-      return unless stored = @storage[key]
-
-      if val.nil? || stored == val
-	@storage.delete key
-	return
-      end
-
-      stored.delete val
-      @storage[key] = stored.first if stored.size == 1
-    end
-
-    def get key
-      @storage[key]
-    end
-    alias :[] :get
-
-    def set key, val
-      unless stored = @storage[key]
-	@storage[key] = val
-	return
-      end
-
-      if stored.is_a? Array
-	stored << val
-      else
-	@storage[key] = [stored, val]
-      end
-    end
-  end
-  # }}}1
 end
