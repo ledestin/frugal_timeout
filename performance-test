@@ -18,7 +18,7 @@ def recursive_timeout n, delay
     end
   }
 rescue FrugalTimeout::Error
-  finish = FrugalTimeout::MonotonicTime.now 
+  finish = FrugalTimeout::MonotonicTime.now
   @m.synchronize { @ar << finish - start - delay }
 end
 
