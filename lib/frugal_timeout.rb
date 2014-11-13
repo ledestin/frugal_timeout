@@ -31,6 +31,13 @@ require 'frugal_timeout/sleeper_notifier'
 #--
 # }}}1
 module FrugalTimeout
+  # Each timeout() call produces a request that contains expiry time. All new
+  # requests are put into a queue, and when the nearest request expires, all
+  # expired requests raise exceptions and are removed from the queue.
+  #
+  # SleeperNotifier is setup here to trigger exception raising (for expired
+  # requests) when the nearest request expires. And queue is setup to let
+  # SleeperNotifier know of the nearest expiry time.
   @requestQueue, sleeper = RequestQueue.new, SleeperNotifier.new
   @requestQueue.onNewNearestRequest { |request|
     sleeper.expireAt request.at
