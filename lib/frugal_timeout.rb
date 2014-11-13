@@ -44,7 +44,7 @@ module FrugalTimeout
   }
   sleeper.onExpiry { @requestQueue.enforceExpired }
 
-  # Ensure that calling timeout() will use FrugalTimeout.timeout()
+  # Ensure that calling ::timeout() will use FrugalTimeout.timeout()
   def self.dropin!
     Object.class_eval \
       'def timeout t, klass=nil, &b
