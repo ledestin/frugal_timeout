@@ -30,7 +30,7 @@ module FrugalTimeout
     def notifyAt time
       synchronize {
 	@notifyAt = time
-	signalThread
+	stopWaiting
       }
     end
 
@@ -55,7 +55,7 @@ module FrugalTimeout
       }
     end
 
-    def signalThread
+    def stopWaiting
       @condVar.signal
     end
 
