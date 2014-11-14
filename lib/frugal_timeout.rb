@@ -40,9 +40,9 @@ module FrugalTimeout
   # SleeperNotifier know of the nearest expiry time.
   @requestQueue, sleeper = RequestQueue.new, SleeperNotifier.new
   @requestQueue.onNewNearestRequest { |request|
-    sleeper.expireAt request.at
+    sleeper.notifyAt request.at
   }
-  sleeper.onExpiry { @requestQueue.enforceExpired }
+  sleeper.onNotify { @requestQueue.enforceExpired }
 
   # Ensure that calling ::timeout() will use FrugalTimeout.timeout()
   def self.dropin!

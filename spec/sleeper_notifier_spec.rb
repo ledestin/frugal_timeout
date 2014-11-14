@@ -5,11 +5,11 @@ describe FrugalTimeout::SleeperNotifier do
   before :all do
     @queue = Queue.new
     @sleeper = FrugalTimeout::SleeperNotifier.new
-    @sleeper.onExpiry { @queue.push '.' }
+    @sleeper.onNotify { @queue.push '.' }
   end
 
   def addRequest sec
-    @sleeper.expireAt MonotonicTime.now + sec
+    @sleeper.notifyAt MonotonicTime.now + sec
   end
 
   it 'sends notification after delay passed' do
@@ -36,13 +36,13 @@ describe FrugalTimeout::SleeperNotifier do
 
   it 'can stop current request by sending nil' do
     addRequest 0.5
-    @sleeper.expireAt nil
+    @sleeper.notifyAt nil
     sleep 0.5
     @queue.should be_empty
   end
 
-  it 'can setup onExpiry again and not break' do
-    @sleeper.onExpiry
+  it 'can setup onNotify again and not break' do
+    @sleeper.onNotify
     addRequest 0.01
     # An exception here would be thrown in a different thread in case of a
     # problem.

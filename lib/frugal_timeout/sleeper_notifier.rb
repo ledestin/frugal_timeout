@@ -4,13 +4,15 @@ require 'monotonic_time'
 require 'frugal_timeout/hookable'
 
 module FrugalTimeout
-  # Executes callback when a request expires.
-  # 1. Set callback to execute with #onExpiry=.
-  # 2. Set expiry time with #expireAt.
-  # 3. After the expiry time comes, execute the callback.
+  # Executes callback at a time, specified by #notifyAt.
   #
-  # It's possible to set a new expiry time before the time set previously
-  # expires. However, if the old request has already expired, @onExpiry will
+  # How to use:
+  # 1. Setup callback using #onNotify (e.g. onNotify { puts 'notified' }).
+  # 2. Set notification time with #notifyAt.
+  # 3. After the notification time comes, execute the callback.
+  #
+  # It's possible to set a new notification time before the time set previously
+  # expires. However, if the old request has already expired, the callback will
   # still be called.
   class SleeperNotifier #:nodoc:
     include Hookable
@@ -18,15 +20,15 @@ module FrugalTimeout
 
     def initialize
       super()
-      def_hook_synced :onExpiry
-      @condVar, @expireAt = new_cond, nil
+      def_hook_synced :onNotify
+      @condVar, @notifyAt = new_cond, nil
 
       @thread = Thread.new {
 	loop {
-	  synchronize { @onExpiry }.call if synchronize {
+	  synchronize { @onNotify }.call if synchronize {
 	    waitForValidRequest
 
-	    timeLeft = timeLeftUntilExpiry
+	    timeLeft = timeLeftUntilNotify
 	    # Prevent processing of the same request again.
 	    disposeOfRequest
 	    elapsedTime = MonotonicTime.measure { wait timeLeft }
@@ -38,9 +40,9 @@ module FrugalTimeout
       ObjectSpace.define_finalizer self, proc { @thread.kill }
     end
 
-    def expireAt time
+    def notifyAt time
       synchronize {
-	@expireAt = time
+	@notifyAt = time
 	signalThread
       }
     end
@@ -48,15 +50,15 @@ module FrugalTimeout
     private
 
     def disposeOfRequest
-      @expireAt = nil
+      @notifyAt = nil
     end
 
     def signalThread
       @condVar.signal
     end
 
-    def timeLeftUntilExpiry
-      delay = @expireAt - MonotonicTime.now
+    def timeLeftUntilNotify
+      delay = @notifyAt - MonotonicTime.now
       delay < 0 ? 0 : delay
     end
 
@@ -65,7 +67,7 @@ module FrugalTimeout
     end
 
     def waitForValidRequest
-      wait until @expireAt
+      wait until @notifyAt
     end
   end
 end
