@@ -14,7 +14,7 @@ module FrugalTimeout
   # It's possible to set a new notification time before the time set previously
   # expires. However, if the old request has already expired, the callback will
   # still be called.
-  class SleeperNotifier #:nodoc:
+  class Timer #:nodoc:
     include Hookable
     include MonitorMixin
 

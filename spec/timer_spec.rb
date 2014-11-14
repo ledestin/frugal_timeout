@@ -1,10 +1,10 @@
 require 'spec_helper'
-require './lib/frugal_timeout/sleeper_notifier'
+require './lib/frugal_timeout/timer'
 
-describe FrugalTimeout::SleeperNotifier do
+describe FrugalTimeout::Timer do
   before :all do
     @queue = Queue.new
-    @sleeper = FrugalTimeout::SleeperNotifier.new
+    @sleeper = FrugalTimeout::Timer.new
     @sleeper.onNotify { @queue.push '.' }
   end
 

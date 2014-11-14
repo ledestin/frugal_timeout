@@ -3,7 +3,7 @@
 require 'timeout'
 require 'frugal_timeout/request'
 require 'frugal_timeout/request_queue'
-require 'frugal_timeout/sleeper_notifier'
+require 'frugal_timeout/timer'
 
 #--
 # {{{1 Rdoc
@@ -35,14 +35,14 @@ module FrugalTimeout
   # requests are put into a queue, and when the nearest request expires, all
   # expired requests raise exceptions and are removed from the queue.
   #
-  # SleeperNotifier is setup here to trigger exception raising (for expired
-  # requests) when the nearest request expires. And queue is setup to let
-  # SleeperNotifier know of the nearest expiry time.
-  @requestQueue, sleeper = RequestQueue.new, SleeperNotifier.new
+  # Timer is setup here to trigger exception raising (for expired requests) when
+  # the nearest request expires. And queue is setup to let Timer know of the
+  # nearest expiry time.
+  @requestQueue, timer = RequestQueue.new, Timer.new
   @requestQueue.onNewNearestRequest { |request|
-    sleeper.notifyAt request.at
+    timer.notifyAt request.at
   }
-  sleeper.onNotify { @requestQueue.enforceExpired }
+  timer.onNotify { @requestQueue.enforceExpired }
 
   # Ensure that calling ::timeout() will use FrugalTimeout.timeout()
   def self.dropin!
