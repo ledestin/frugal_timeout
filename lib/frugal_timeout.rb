@@ -64,6 +64,8 @@ module FrugalTimeout
   def self.timeout sec, klass=nil
     return yield sec if sec.nil? || sec <= 0
 
+    # Exception to raise on timeout expiry *inside* yield. A unique class is
+    # needed to prevent #timeout() calls within yield from rescuing it.
     innerException = klass || Class.new(Timeout::ExitException)
     begin
       request = @requestQueue.queue(sec, innerException)
