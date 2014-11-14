@@ -23,20 +23,7 @@ module FrugalTimeout
       def_hook_synced :onNotify
       @condVar, @notifyAt = new_cond, nil
 
-      @thread = Thread.new {
-	loop {
-	  synchronize { @onNotify }.call if synchronize {
-	    waitForValidRequest
-
-	    timeLeft = timeLeftUntilNotify
-	    # Prevent processing of the same request again.
-	    disposeOfRequest
-	    elapsedTime = MonotonicTime.measure { wait timeLeft }
-
-	    elapsedTime >= timeLeft
-	  }
-	}
-      }
+      @thread = Thread.new { processRequests }
       ObjectSpace.define_finalizer self, proc { @thread.kill }
     end
 
@@ -51,6 +38,21 @@ module FrugalTimeout
 
     def disposeOfRequest
       @notifyAt = nil
+    end
+
+    def processRequests
+      loop {
+	synchronize { @onNotify }.call if synchronize {
+	  waitForValidRequest
+
+	  timeLeft = timeLeftUntilNotify
+	  # Prevent processing of the same request again.
+	  disposeOfRequest
+	  elapsedTime = MonotonicTime.measure { wait timeLeft }
+
+	  elapsedTime >= timeLeft
+	}
+      }
     end
 
     def signalThread
