@@ -67,7 +67,7 @@ module FrugalTimeout
     innerException = klass || Class.new(Timeout::ExitException)
     begin
       request = @requestQueue.queue(sec, innerException)
-      # Defuse is here only for the case when exception comes from the yield
+      # 'defuse!' is here only for the case when exception comes from the yield
       # block. Otherwise, when timeout exception is raised, the request is
       # defused automatically.
       #
