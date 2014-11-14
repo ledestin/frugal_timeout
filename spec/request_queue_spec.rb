@@ -43,11 +43,11 @@ describe FrugalTimeout::RequestQueue do
     it 'defuses all requests for the thread' do
       req = @requests.queue(10, FrugalTimeout::Error)
       @requests.queue(0, FrugalTimeout::Error)
+      thread = nil
       expect {
-	Thread.new {
-	  @requests.enforceExpired
-	}.join
+	(thread = Thread.new { @requests.enforceExpired }).join
       }.to raise_error FrugalTimeout::Error
+      thread.join
       req.defused?.should == true
     end
 
