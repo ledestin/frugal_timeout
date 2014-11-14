@@ -80,6 +80,7 @@ module FrugalTimeout
 	request.defuse!
       end
     rescue innerException => e
+      # Respect user's choice of exception.
       raise if klass
 
       raise Error, e.message, e.backtrace
