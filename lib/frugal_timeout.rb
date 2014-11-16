@@ -47,8 +47,8 @@ module FrugalTimeout
   # Ensure that calling ::timeout() will use FrugalTimeout.timeout()
   def self.dropin!
     Object.class_eval \
-      'def timeout t, klass=nil, &b
-	 FrugalTimeout.timeout t, klass, &b
+      'def timeout sec, klass=nil, &b
+         FrugalTimeout.timeout sec, klass, &b
        end'
   end
 
