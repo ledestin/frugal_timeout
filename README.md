@@ -2,7 +2,7 @@ frugal_timeout
 ==============
 
 [![Build Status](https://travis-ci.org/ledestin/frugal_timeout.png)](https://travis-ci.org/ledestin/frugal_timeout)
-[![Coverage Status] (https://coveralls.io/repos/ledestin/frugal_timeout/badge.png)] (https://coveralls.io/r/ledestin/frugal_timeout)
+[![Coverage Status](https://coveralls.io/repos/github/ledestin/frugal_timeout/badge.svg?branch=master)](https://coveralls.io/github/ledestin/frugal_timeout?branch=master)
 [![Code Climate](https://codeclimate.com/github/ledestin/frugal_timeout.png)](https://codeclimate.com/github/ledestin/frugal_timeout)
 
 Ruby Timeout.timeout replacement using only 1 thread
